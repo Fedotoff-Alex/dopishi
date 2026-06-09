@@ -1,0 +1,109 @@
+# Dopishi (Допиши)
+
+System-wide inline autocomplete for macOS, powered by a fully local LLM. Dopishi shows
+gray "ghost" suggestions at the caret in almost any app and completes your text when you
+press Tab - similar in spirit to Cotypist and Cotabby, but built from scratch as a learning
+and open-source project. Everything runs on-device; nothing is sent to the network.
+
+> Status: experimental / personal project. It builds, is covered by ~290 tests, and works
+> day to day, but it is not a polished release yet (see Limitations). Use at your own risk.
+
+## What it does
+
+- **Inline completion** - ghost text at the caret across native and Electron apps (TextEdit,
+  Notes, Mail, Slack, Claude, browsers, and more). Tab accepts a word, Tab again continues.
+- **Keyboard layout fixing** - Punto-style. Detects text typed in the wrong layout and offers
+  to convert RU<->EN. Manual conversion of the last word by tapping Option.
+- **Spelling correction** - misspelled words get a green ghost suggestion; Tab applies it.
+- **Emoji** - type `:name` and Tab to insert an emoji.
+- **Context channels** (all opt-in, off by default):
+  - **Screen (OCR)** - reads the text around the field via ScreenCaptureKit + Vision so
+    suggestions fit the conversation or document, not just the current line.
+  - **Clipboard** - recently copied text is mixed in when it is fresh and relevant.
+  - **Memory** - a local SQLite store (GRDB) remembers what you wrote per window and feeds
+    it back as context.
+
+## Privacy
+
+- The model runs **locally** via llama.cpp (Metal). No text leaves your machine.
+- All three context channels are **opt-in and off by default**.
+- **Secure fields** (passwords, OTP, card numbers) are never read, completed, or stored.
+- Clipboard / memory content that looks like a secret (API keys, tokens) is dropped before
+  it can reach the prompt.
+- Per-app exclusions: turn Dopishi off for specific apps.
+- Memory is plaintext SQLite under `~/Library/Application Support/Dopishi/` with owner-only
+  file permissions, a 14-day TTL, and a "Clear memory" button. Disk encryption is on the
+  roadmap, so treat the store as plaintext for now.
+
+## Requirements
+
+- macOS 14 (Sonoma) or later, Apple Silicon recommended (Metal).
+- Xcode 26+ / Swift 6.2+ (the package declares swift-tools-version 6.2; the test runner needs
+  Xcode, Command Line Tools alone cannot run swift-testing).
+- A GGUF model (a small instruct model such as Qwen3-4B or Gemma works well).
+
+## Permissions
+
+Dopishi needs the following macOS permissions (grant them in System Settings -> Privacy & Security):
+
+- **Accessibility** - to read the focused field and place the ghost text.
+- **Input Monitoring** - to observe typing.
+- **Screen Recording** - only if you enable the Screen (OCR) context channel.
+
+## Build and run
+
+```bash
+git clone https://github.com/Fedotoff-Alex/dopishi.git
+cd dopishi
+swift build            # resolves dependencies (incl. the pinned LocalLLMClient fork) and builds
+swift test             # ~290 tests (requires Xcode)
+./scripts/make-app.sh  # assembles and code-signs dist/Dopishi.app
+open dist/Dopishi.app
+```
+
+On first launch, grant the permissions above from the menu-bar icon, then download a model
+from Settings (or drop a `.gguf` into `~/Library/Application Support/Dopishi/Models/`).
+
+## Architecture
+
+SwiftPM workspace with focused targets:
+
+- **DopishiCore** - pure logic, no AppKit: prompt building, context sanitization, layout
+  transliteration, completion-stop rules, settings. Heavily unit-tested.
+- **DopishiLLM** - the local LLM engine (LocalLLMClient + llama.cpp, C++ interop, Metal).
+- **DopishiMemory** - local SQLite memory via GRDB.
+- **DopishiApp** - the menu-bar app: accessibility reader, input monitor, ghost overlay,
+  OCR provider, suggestion controller, settings UI.
+
+Suggestions never block on I/O: OCR, clipboard, and memory are precomputed snapshots that
+the prompt builder reads as-is. The static few-shot prompt head is kept literal so the
+llama.cpp KV cache can be reused across keystrokes.
+
+## Dependencies and licenses
+
+- [LocalLLMClient](https://github.com/Fedotoff-Alex/LocalLLMClient) (fork with local patches,
+  pinned by revision) - wraps llama.cpp.
+- [GRDB.swift](https://github.com/groue/GRDB.swift) - SQLite (MIT).
+- llama.cpp - bundled via LocalLLMClient (MIT).
+
+Models you download have their **own licenses** (for example Qwen and Gemma each have their
+own terms). You are responsible for complying with the license of any model you use.
+
+## Limitations
+
+- Dev build, not notarized. Run from `dist/Dopishi.app` on your own machine.
+- Suggestion quality is bounded by the size of the local model.
+- Electron/Claude support uses some private/undocumented Accessibility APIs and may break on
+  OS or app updates.
+- Prompt-injection from context channels is reduced (symbol stripping, secret dropping), not
+  fully solved. Context is treated as untrusted hints.
+
+## Credits
+
+Inspired by [Cotypist](https://cotypist.app) and [Cotabby](https://cotabby.app). Dopishi is
+an independent implementation; behavior was studied from their public apps and re-implemented
+from scratch.
+
+## License
+
+MIT - see [LICENSE](LICENSE).

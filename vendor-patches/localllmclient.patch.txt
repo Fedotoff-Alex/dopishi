@@ -1,0 +1,147 @@
+# LocalLLMClient local patches
+# База (upstream tattn/LocalLLMClient): cd971ffd777525b48b105acd96a84675fd9a3336
+# Применять: git clone https://github.com/tattn/LocalLLMClient && cd LocalLLMClient && git checkout cd971ffd777525b48b105acd96a84675fd9a3336 && git apply <this-without-header>
+# Патчи: BOS для .plain (Decoder), batch.clear() в Context.clear (Context), logprob-аккумулятор (Sampler/LlamaClient).
+# ВРЕМЕННО: до форка (задача #60). После форка - перенести в форк, привязать Package.swift по revision.
+diff --git a/Sources/LocalLLMClientLlama/Context.swift b/Sources/LocalLLMClientLlama/Context.swift
+index b0811b6..b2e39bf 100644
+--- a/Sources/LocalLLMClientLlama/Context.swift
++++ b/Sources/LocalLLMClientLlama/Context.swift
+@@ -20,6 +20,16 @@ public final class Context: @unchecked Sendable {
+     private var promptCaches: [(chunk: MessageChunk, lastPosition: llama_pos)] = []
+     let pauseHandler: PauseHandler
+ 
++    // confidence (dopishi): накопление логвероятностей выбранных токенов для порога уверенности.
++    package var logprobSum: Double = 0
++    package var logprobCount: Int = 0
++
++    // KV-reuse (dopishi): токены прошлого .plain-промпта - для переиспользования KV общего
++    // префикса (автокомплит: меняется лишь хвост, декодируем только новые токены).
++    package var cachedTokens: [llama_token] = []
++    package func recordLogprob(_ lp: Double) { logprobSum += lp; logprobCount += 1 }
++    public var averageLogprob: Double { logprobCount > 0 ? logprobSum / Double(logprobCount) : 0 }
++
+     package var vocab: OpaquePointer {
+         model.vocab
+     }
+@@ -93,6 +103,13 @@ public final class Context: @unchecked Sendable {
+     }
+ 
+     public func clear() {
++        // FIX (dopishi): clear() сбрасывал только KV-память, но НЕ pending-batch.
++        // Ранний стоп/отмена генерации оставляли "висячий" токен в batch -> следующая
++        // .plain-генерация падала с "batch decode failed". Чистим batch тоже.
++        batch.clear()
++        logprobSum = 0
++        logprobCount = 0
++        cachedTokens = []
+         guard let kv = llama_get_memory(context) else {
+             return
+         }
+diff --git a/Sources/LocalLLMClientLlama/Decoder.swift b/Sources/LocalLLMClientLlama/Decoder.swift
+index 3bbbec8..fcb8e5f 100644
+--- a/Sources/LocalLLMClientLlama/Decoder.swift
++++ b/Sources/LocalLLMClientLlama/Decoder.swift
+@@ -30,9 +30,9 @@ public extension Context {
+         return numberOfTokens
+     }
+ 
+-    func decode(text: String) throws(LLMError) {
++    func decode(text: String, addBos: Bool = false) throws(LLMError) {
+         let startPosition = position
+-        let tokens = [llama_token](text, addBos: false, special: true, vocab: vocab)
++        let tokens = [llama_token](text, addBos: addBos, special: true, vocab: vocab)
+ 
+         // Split tokens into chunks based on parameter.batch to avoid buffer overflow
+         let chunkSize = parameter.batch
+@@ -46,4 +46,41 @@ public extension Context {
+             try decode()
+         }
+     }
++
++    /// decode с переиспользованием KV общего префикса (dopishi, для автокомплита).
++    /// Сравнивает токены нового промпта с прошлым (cachedTokens), удаляет KV только после
++    /// точки расхождения (llama_memory_seq_rm) и декодирует ЛИШЬ новый хвост. При наборе
++    /// меняется конец строки -> считаем 1-2 токена вместо всего промпта.
++    func decodeReusingPrefix(text: String, addBos: Bool = false) throws(LLMError) {
++        let newTokens = [llama_token](text, addBos: addBos, special: true, vocab: vocab)
++        guard !newTokens.isEmpty else { clear(); return }
++
++        // длина общего префикса с прошлым промптом
++        var common = 0
++        let maxCommon = min(cachedTokens.count, newTokens.count)
++        while common < maxCommon, cachedTokens[common] == newTokens[common] { common += 1 }
++        // нужен минимум один НОВЫЙ токен - на нём берутся logits для генерации
++        if common == newTokens.count { common = newTokens.count - 1 }
++
++        // удаляем KV после общего префикса (старый хвост промпта + прошлая генерация)
++        if let kv = llama_get_memory(context) {
++            llama_memory_seq_rm(kv, 0, llama_pos(common), -1)
++        }
++        batch.clear()
++        logprobSum = 0
++        logprobCount = 0
++
++        // декодируем только суффикс начиная с позиции common
++        let suffix = Array(newTokens[common...])
++        let chunkSize = parameter.batch
++        for chunkStart in stride(from: 0, to: suffix.count, by: chunkSize) {
++            let chunk = suffix[chunkStart..<min(chunkStart + chunkSize, suffix.count)]
++            let chunkOffset = llama_pos(common) + llama_pos(chunkStart)
++            for (index, token) in chunk.enumerated() {
++                batch.add(id: token, pos: chunkOffset + llama_pos(index), seq_ids: [0], logits: false)
++            }
++            try decode()
++        }
++        cachedTokens = newTokens
++    }
+ }
+diff --git a/Sources/LocalLLMClientLlama/LlamaClient.swift b/Sources/LocalLLMClientLlama/LlamaClient.swift
+index 14e0320..95fd539 100644
+--- a/Sources/LocalLLMClientLlama/LlamaClient.swift
++++ b/Sources/LocalLLMClientLlama/LlamaClient.swift
+@@ -10,6 +10,10 @@ public final class LlamaClient: LLMClient {
+     private let multimodal: MultimodalContext?
+     private let messageProcessor: MessageProcessor
+     let tools: [AnyLLMTool]
++
++    /// confidence (dopishi): средняя логвероятность токенов последней генерации.
++    public var averageLogprob: Double { context.averageLogprob }
++
+     /// Owned by this client; freed in `deinit`.
+     nonisolated(unsafe) private let chatParamsPtr: UnsafeMutablePointer<llm_chat_params>?
+ 
+@@ -60,8 +64,10 @@ public final class LlamaClient: LLMClient {
+         do {
+             switch input.value {
+             case .plain(let text):
+-                context.clear()
+-                try context.decode(text: text)
++                // KV-reuse (dopishi): не сбрасываем весь KV каждый раз - переиспользуем общий
++                // префикс с прошлым промптом и декодируем только новый хвост (главное ускорение
++                // автокомплита). BOS обязателен для Gemma (иначе зацикливание символов).
++                try context.decodeReusingPrefix(text: text, addBos: true)
+             case .chatTemplate(let messages):
+                 try messageProcessor.process(
+                     templateMessages: messages,
+diff --git a/Sources/LocalLLMClientLlama/Sampler.swift b/Sources/LocalLLMClientLlama/Sampler.swift
+index a40c263..944bdf2 100644
+--- a/Sources/LocalLLMClientLlama/Sampler.swift
++++ b/Sources/LocalLLMClientLlama/Sampler.swift
+@@ -43,6 +43,16 @@ package extension Sampler {
+             assert(tokenDataArray.selected != -1)
+         }
+         let token = data.id
++        // confidence (dopishi): сырая логвероятность выбранного токена по немодифицированным logits.
++        let vocabCount = context.cursorPointer.count
++        if vocabCount > 0, Int(token) >= 0, Int(token) < vocabCount {
++            var maxLogit = logits[0]
++            for i in 1..<vocabCount where logits[i] > maxLogit { maxLogit = logits[i] }
++            var sumExp = 0.0
++            for i in 0..<vocabCount { sumExp += exp(Double(logits[i] - maxLogit)) }
++            let logprob = Double(logits[Int(token)] - maxLogit) - log(sumExp)
++            context.recordLogprob(logprob)
++        }
+         llama_sampler_accept(self, token)
+         return token
+     }

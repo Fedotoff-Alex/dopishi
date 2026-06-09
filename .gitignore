@@ -1,0 +1,7 @@
+.build/
+dist/
+*.app
+.DS_Store
+.swiftpm/
+Packages/LocalLLMClient
+bench-results.json
