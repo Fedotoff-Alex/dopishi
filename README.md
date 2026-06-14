@@ -5,8 +5,8 @@ gray "ghost" suggestions at the caret in almost any app and completes your text 
 press Tab - similar in spirit to Cotypist and Cotabby, but built from scratch as a learning
 and open-source project. Everything runs on-device; nothing is sent to the network.
 
-> Status: experimental / personal project. It builds, is covered by ~290 tests, and works
-> day to day, but it is not a polished release yet (see Limitations). Use at your own risk.
+> Status: experimental / personal project (v0.9.0 beta). It builds, is covered by ~470 tests,
+> and works day to day, but it is not a polished release yet (see Limitations). Use at your own risk.
 
 ## What it does
 
@@ -15,7 +15,13 @@ and open-source project. Everything runs on-device; nothing is sent to the netwo
 - **Keyboard layout fixing** - Punto-style. Detects text typed in the wrong layout and offers
   to convert RU<->EN. Manual conversion of the last word by tapping Option.
 - **Spelling correction** - misspelled words get a green ghost suggestion; Tab applies it.
-- **Emoji** - type `:name` and Tab to insert an emoji.
+- **Selection actions** - select text, press the hotkey, and the local model fixes / shortens /
+  rewrites / expands / translates / re-tones it; Tab replaces the selection.
+- **Emoji and snippets** - type `:name` and Tab to insert an emoji or your own snippet.
+- **Setup and control** - a first-run wizard (permissions, model download, test field), a
+  Privacy Center (pause, per-app "don't learn here", retention window, export / clear memory),
+  and a model manager (download with sha256 verification, resume / cancel, on-disk size, speed
+  benchmark).
 - **Context channels** (all opt-in, off by default):
   - **Screen (OCR)** - reads the text around the field via ScreenCaptureKit + Vision so
     suggestions fit the conversation or document, not just the current line.
@@ -32,8 +38,9 @@ and open-source project. Everything runs on-device; nothing is sent to the netwo
   it can reach the prompt.
 - Per-app exclusions: turn Dopishi off for specific apps.
 - Memory is plaintext SQLite under `~/Library/Application Support/Dopishi/` with owner-only
-  file permissions, a 14-day TTL, and a "Clear memory" button. Disk encryption is on the
-  roadmap, so treat the store as plaintext for now.
+  file permissions and a configurable retention window (default 7 days). The Privacy Center
+  lets you exclude specific apps from learning, and export or clear the store. Disk encryption
+  is on the roadmap, so treat the store as plaintext for now.
 
 ## Requirements
 
@@ -56,7 +63,7 @@ Dopishi needs the following macOS permissions (grant them in System Settings -> 
 git clone https://github.com/Fedotoff-Alex/dopishi.git
 cd dopishi
 swift build            # resolves dependencies (incl. the pinned LocalLLMClient fork) and builds
-swift test             # ~290 tests (requires Xcode)
+swift test             # ~470 tests (requires Xcode)
 ./scripts/make-app.sh  # assembles and code-signs dist/Dopishi.app
 open dist/Dopishi.app
 ```
@@ -94,7 +101,8 @@ own terms). You are responsible for complying with the license of any model you 
 - Dev build, not notarized. Run from `dist/Dopishi.app` on your own machine.
 - Suggestion quality is bounded by the size of the local model.
 - Electron/Claude support uses some private/undocumented Accessibility APIs and may break on
-  OS or app updates.
+  OS or app updates. In Electron apps the accessibility text can also lag fast typing, so a
+  mid-word completion may occasionally be spaced or skipped; native apps are unaffected.
 - Prompt-injection from context channels is reduced (symbol stripping, secret dropping), not
   fully solved. Context is treated as untrusted hints.
 

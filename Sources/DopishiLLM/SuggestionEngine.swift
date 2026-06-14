@@ -71,6 +71,9 @@ public actor SuggestionEngine {
     private let config: EngineConfig
     /// Прод-телеметрия скрытий подсказок (почему гейт скрыл, по приложению).
     private var tally = RejectionTally()
+    /// Причина исхода ПОСЛЕДНЕЙ завершённой генерации (SC-5 Phase 6): .none = показано.
+    /// Выставляется ДО continuation.finish() - читающий после конца стрима видит свою причину.
+    private var lastStreamRejection: RejectionReason = .none
     /// Runtime-оверрайды из настроек (меняются БЕЗ пересоздания движка/перезагрузки модели):
     /// длина дополнения (maxWords) и пользовательские указания в голову промпта.
     private var runtimeMaxWords: Int?
@@ -131,6 +134,39 @@ public actor SuggestionEngine {
         _ = try? await loadedClient()
     }
 
+    /// Одноразовая трансформация текста (Selection Actions, UX-03): не стрим в overlay,
+    /// а полный результат целиком. Сериализуется с генерациями подсказок (тот же llama-контекст,
+    /// параллельный decode = SIGSEGV). Известное ограничение: extraEOSTokens содержит "\n",
+    /// поэтому результат - один абзац (для исправить/переписать предложение - то, что нужно).
+    public func transform(_ text: String, action: SelectionAction) async -> String? {
+        guard FileManager.default.fileExists(atPath: modelURL.path) else { return nil }
+        let previous = lastGeneration
+        let prompt = action.prompt(for: text)
+        let maxChars = max(512, text.count * 3)
+        let hadNewlines = text.contains("\n")
+        let work = Task { () -> String? in
+            await previous?.value
+            do {
+                if Task.isCancelled { return nil }
+                let client = try await self.loadedClient()
+                let generator = try client.textStream(from: .plain(prompt))
+                var acc = ""
+                let startedAt = Date()
+                for try await chunk in generator {
+                    try Task.checkCancellation()
+                    acc += chunk
+                    if acc.count >= maxChars || Date().timeIntervalSince(startedAt) > 25 { break }
+                }
+                let cleaned = SelectionAction.cleanResult(acc, originalHadNewlines: hadNewlines)
+                return cleaned.isEmpty ? nil : cleaned
+            } catch {
+                return nil
+            }
+        }
+        lastGeneration = Task { _ = await work.value }
+        return await work.value
+    }
+
     /// Обёртка для совместимости: стрим только по хвосту поля (без OCR-канала).
     public func stream(prefix: String, appId: String? = nil) -> AsyncThrowingStream<String, Error> {
         stream(bundle: ContextBundle(fieldTail: prefix), appId: appId)
@@ -139,13 +175,17 @@ public actor SuggestionEngine {
     /// Стрим короткой подсказки-продолжения по набору каналов контекста (хвост поля + опц. OCR).
     /// Применяет PromptBuilder/ContextBuilder + CompletionStop; уважает отмену Task.
     /// Гейты работают строго по bundle.fieldTail (OCR в echo/repetition/language не попадает).
-    public func stream(bundle: ContextBundle, appId: String? = nil) -> AsyncThrowingStream<String, Error> {
+    /// `adaptive` (MEM-02) - per-app/per-request оверрайды порога уверенности и длины;
+    /// nil = поведение прежнее (runtime-настройки/конфиг).
+    public func stream(bundle: ContextBundle, appId: String? = nil,
+                       adaptive: AdaptiveParams? = nil) -> AsyncThrowingStream<String, Error> {
         let url = modelURL
         let cfg = config
         let app = appId
         let prefix = bundle.fieldTail
         let instructions = runtimeInstructions
-        let maxWords = runtimeMaxWords ?? cfg.maxWords
+        let maxWords = adaptive?.maxWords ?? runtimeMaxWords ?? cfg.maxWords
+        let minConfidence = adaptive?.minConfidence ?? cfg.minConfidence
         let (stream, continuation) = AsyncThrowingStream<String, Error>.makeStream()
         // Сериализация генераций: llama-context НЕ потокобезопасен. Если новая подсказка
         // стартует, пока прежняя ещё считает (быстрый набор / поллинг Electron), два параллельных
@@ -154,6 +194,9 @@ public actor SuggestionEngine {
         let previous = lastGeneration
         let task = Task {
             await previous?.value
+            // Сброс причины прошлой генерации: ранние выходы (нет файла модели/ошибка)
+            // не должны отдавать читателю устаревший reason.
+            self.lastStreamRejection = .none
             do {
                 if Task.isCancelled { continuation.finish(); return }
                 guard FileManager.default.fileExists(atPath: url.path) else {
@@ -193,7 +236,7 @@ public actor SuggestionEngine {
                            raw: r.trimmed,
                            prefix: prefix,
                            averageLogprob: client.averageLogprob,
-                           minConfidence: cfg.minConfidence
+                           minConfidence: minConfidence
                        ),
                        preview != lastYielded {
                         continuation.yield(preview)
@@ -213,7 +256,7 @@ public actor SuggestionEngine {
                 }
                 let (finalSug, finalReason) = Self.presentableSuggestionDebug(
                     raw: finalText, prefix: prefix,
-                    averageLogprob: client.averageLogprob, minConfidence: cfg.minConfidence)
+                    averageLogprob: client.averageLogprob, minConfidence: minConfidence)
                 if let final = finalSug, final != lastYielded {
                     continuation.yield(final)
                     didYield = true
@@ -310,6 +353,7 @@ public actor SuggestionEngine {
     /// Зафиксировать исход прод-генерации: показано или скрыто (с причиной), по приложению.
     /// Под env DOPISHI_REJECTIONS=1 пишет причину скрытия в лог.
     private func recordOutcome(shown: Bool, reason: RejectionReason, appId: String?) {
+        lastStreamRejection = shown ? .none : reason
         if shown {
             tally = tally.recordingShown(app: appId)
         } else {
@@ -320,6 +364,11 @@ public actor SuggestionEngine {
             }
         }
     }
+
+    /// Причина исхода последней завершённой генерации (SC-5: контроллер пишет её в
+    /// suggestion_event при modelEmpty). Контракт порядка: recordOutcome выполняется ДО
+    /// continuation.finish(), поэтому чтение после конца стрима видит причину своего стрима.
+    public func lastRejectionReason() -> RejectionReason { lastStreamRejection }
 
     /// Текущая сводка телеметрии скрытий (для HUD/диагностики).
     public func rejectionTally() -> RejectionTally { tally }

@@ -16,6 +16,8 @@ final class ContextProbe {
     /// После Tab/grave-вставки probe сам перечитывает новую каретку/текст и просит контроллер
     /// продолжить фразу (остаток из памяти или генерация). AX-события на синтетику нет.
     var onContinueAfterAccept: ((EditingContext) -> Void)?
+    /// Длительность последнего AccessibilityReader.read() в мс (для DiagnosticsCenter, D-07/D-08).
+    var onAXReadMs: ((Int) -> Void)?
 
     /// bundleId приложений, где Dopishi не активничает.
     var excludedBundleIds: Set<String> = []
@@ -42,8 +44,14 @@ final class ContextProbe {
 
     /// Локальная память контекста (opt-in). AppDelegate включает по настройке.
     let memoryProvider = MemoryProvider()
-    private var lastMemThreadKey: String?
+    private(set) var lastMemThreadKey: String?
     private var lastMemFieldText: String?
+
+    /// Хелпер расчёта миллисекунд из Duration (ContinuousClock). Дубль из SuggestionController.
+    private static func ms(_ d: Duration) -> Int {
+        let (sec, atto) = d.components
+        return Int(sec) * 1000 + Int(atto / 1_000_000_000_000_000)
+    }
 
     @discardableResult
     func start() -> Bool {
@@ -80,9 +88,14 @@ final class ContextProbe {
                     self.recompute()
                 case .caretMayHaveMoved:
                     self.pollTask?.cancel()
-                    // каретка сдвинулась (клик) - фолбэк-буфер больше не непрерывен
+                    // каретка сдвинулась (клик/стрелки/Enter) - фолбэк-буфер больше не непрерывен
                     self.buffer = self.buffer.reset()
-                    self.recompute()
+                    let moved = self.recompute()
+                    // Enter в чате чистит поле ПОСЛЕ того, как приложение обработает клавишу -
+                    // мгновенная перечитка видит ещё СТАРЫЙ текст, и ghost висел бы над пустым
+                    // полем до следующего ввода. Короткий поллинг (force: и для нативных
+                    // приложений, не только Electron) дочитывает новое состояние поля.
+                    self.scheduleElectronRecompute(previousText: moved.precedingText, force: true)
                 case .suggestRequested:
                     self.onSuggest?()
                 case .acceptRequested:
@@ -111,8 +124,11 @@ final class ContextProbe {
                     // Ручной тап работает и в textOnly (напр. Electron/Claude): конверсия
                     // последнего слова не требует позиции каретки - только текст (из AX или
                     // фолбэк-буфера), замена идёт backspace+вставкой. Явный жест пользователя
-                    // плюс откат ⌃⌥Z страхуют от неточности буфера. Отсекаем лишь .none и secure.
-                    if ctx.capability != .none, !ctx.isSecure,
+                    // плюс откат ⌃⌥Z страхуют от неточности буфера. Отсекаем secure.
+                    // Выделение (selectedText) - отдельный путь: его конвертируем даже при
+                    // capability == .none (текста до каретки нет, но выделенное AX отдал).
+                    let hasSelection = !(ctx.selectedText?.isEmpty ?? true)
+                    if (ctx.capability != .none || hasSelection), !ctx.isSecure,
                        AppPolicy.isAllowed(bundleId: ctx.appBundleId, excluded: self.excludedBundleIds) {
                         self.onLayoutSwitch?(ctx.precedingText, ctx.selectedText)
                         self.buffer = self.buffer.reset()   // замена слова - инъекция, буфер невалиден
@@ -134,8 +150,10 @@ final class ContextProbe {
     /// поэтому синхронный recompute даёт текст без последнего символа. Перечитываем
     /// несколько раз с нарастающей задержкой, пока текст не изменится (или не выйдет таймаут).
     /// recompute() сам вызовет onContext со свежим контекстом - подсказка перестроится.
-    private func scheduleElectronRecompute(previousText: String) {
-        guard enhancedUIEnabled else { return }   // только когда включена поддержка Electron
+    /// force: поллить независимо от тумблера Electron - для caret-move/Enter, где отложенное
+    /// обновление поля (очистка после отправки) случается и в нативных приложениях.
+    private func scheduleElectronRecompute(previousText: String, force: Bool = false) {
+        guard enhancedUIEnabled || force else { return }   // только когда включена поддержка Electron (или force)
         pollTask?.cancel()
         pollTask = Task { @MainActor [weak self] in
             for delayMs in [25, 40, 70, 120, 150] {   // суммарно ~400 мс максимум
@@ -176,7 +194,9 @@ final class ContextProbe {
     /// Рассылку делает вызывающий: recompute() -> onContext (обычный путь набора), accept-поллинг
     /// -> onContinueAfterAccept. Разделение нужно, чтобы после Tab не стереть остаток фразы.
     private func buildContext() -> EditingContext {
+        let readStart = ContinuousClock.now
         let ax = AccessibilityReader.read(enableEnhancedUI: enhancedUIEnabled)
+        onAXReadMs?(Self.ms(ContinuousClock.now - readStart))
         if ax.isSecure { buffer = buffer.reset() }   // не копим секреты
         if ax.appBundleId != lastAppBundleId {        // сменилось приложение/фокус - не тащим чужой текст
             buffer = buffer.reset()
@@ -221,7 +241,15 @@ final class ContextProbe {
                 memoryProvider.setCurrentThread(memKey)
             }
             if !ax.isSecure, AppPolicy.isAllowed(bundleId: ax.appBundleId, excluded: excludedBundleIds) {
+                // MEM-01: снимок «Память:» подтягивает релевантное старое (FTS5) под
+                // набираемый текст. Внутри secure/excluded-гейта: запрос не строится из
+                // содержимого secure-полей. Фоном + дебаунс - hot-path не ждёт БД.
+                memoryProvider.noteTypingPrefix(clipPrefix)
                 let newText = ax.text ?? ""
+                // ax.text теперь оконный слайс (range-read, max ~1000 символов), не полный текст поля (Phase 2).
+                // Shrink-эвристика работает на capped-тексте: основной кейс (Enter в чате: prev=окно, new="")
+                // ловится. Частичный shrink огромного поля (>1000 реальных символов) может не сработать -
+                // принятый компромисс (D-03, RESEARCH Pitfall 4): TTL памяти 7 дней, потеря несущественна.
                 // Резкое сокращение поля (>50%, было существенным) = отправка/очистка/замена ->
                 // пишем ПРЕ-очистный текст (главный кейс чатов: поле чистится на Enter).
                 if let prev = lastMemFieldText, prev.count >= 8, newText.count * 2 < prev.count {
@@ -250,7 +278,8 @@ final class ContextProbe {
             keystrokeText: buffer.text,
             ocr: ocrProvider.enabled ? ocrProvider.latest : nil,
             clipboard: clip,
-            memory: mem
+            memory: mem,
+            axFollowingText: ax.followingText
         )
         return ctx
     }

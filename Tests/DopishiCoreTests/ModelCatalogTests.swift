@@ -3,8 +3,39 @@ import Foundation
 @testable import DopishiCore
 
 @Suite struct ModelCatalogTests {
-    @Test func hasSixPresets() {
-        #expect(ModelCatalog.presets.count == 6)
+    @Test func hasEightPresets() {
+        #expect(ModelCatalog.presets.count == 8)
+    }
+    // MODEL-01: T-lite от Т-Банка (t-tech), официальный GGUF, Apache 2.0.
+    @Test func tlitePresetIsApacheLicensed() {
+        let t = ModelCatalog.preset(id: "T-lite-it-2.1-Q4_K_M.gguf")
+        #expect(t != nil)
+        #expect(t?.license == .apache2)
+        #expect(t?.downloadURL.absoluteString == "https://huggingface.co/t-tech/T-lite-it-2.1-GGUF/resolve/main/T-lite-it-2.1-Q4_K_M.gguf")
+    }
+    // MODEL-02: YandexGPT в каталоге с ЯВНОЙ кастомной лицензией (не MIT/Apache) и URL.
+    @Test func yandexPresetHasCustomLicenseAndURL() {
+        let y = ModelCatalog.preset(id: "YandexGPT-5-Lite-8B-instruct-Q4_K_M.gguf")
+        #expect(y != nil)
+        guard let y else { return }
+        #expect(y.downloadURL.absoluteString == "https://huggingface.co/yandex/YandexGPT-5-Lite-8B-instruct-GGUF/resolve/main/YandexGPT-5-Lite-8B-instruct-Q4_K_M.gguf")
+        #expect(y.approxSizeGB == 4.9)
+        if case let .custom(name, url) = y.license {
+            #expect(name.contains("Yandex"))
+            #expect(url.contains("huggingface.co/yandex/YandexGPT-5-Lite-8B-instruct-GGUF"))
+        } else {
+            Issue.record("YandexGPT обязан иметь license == .custom (MODEL-02), получено: \(y.license)")
+        }
+    }
+    @Test func qwenPresetsAreApache2() {
+        #expect(ModelCatalog.preset(id: "Qwen3-4B-Instruct-2507-Q4_K_M.gguf")?.license == .apache2)
+        #expect(ModelCatalog.preset(id: "Qwen3.5-4B-Q4_K_M.gguf")?.license == .apache2)
+    }
+    @Test func gemmaPresetsAreCustomLicensed() {
+        // Gemma - НЕ Apache: своя Gemma Terms of Use.
+        if case .custom = ModelCatalog.preset(id: "gemma-3-4b-it-Q4_K_M.gguf")!.license {} else {
+            Issue.record("Gemma license должна быть .custom")
+        }
     }
     @Test func qwen3InstructPresetURL() {
         let p = ModelCatalog.preset(id: "Qwen3-4B-Instruct-2507-Q4_K_M.gguf")!

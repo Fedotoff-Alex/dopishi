@@ -63,6 +63,17 @@ import Foundation
         #expect(try s.count() == 0)
     }
 
+    /// Privacy Center (UX-02): экспорт - все НЕистёкшие записи всех потоков, новейшие первыми.
+    @Test func exportItemsAllThreadsNewestFirstSkipsExpired() throws {
+        let s = try store()
+        try s.record(threadKey: "app:1", kind: .message, text: "старое", now: t0)
+        try s.record(threadKey: "app:2", kind: .accepted, text: "новое", now: t0.addingTimeInterval(10))
+        try s.record(threadKey: "app:1", kind: .message, text: "истёкшее", now: t0, ttl: 5)
+        let items = try s.exportItems(now: t0.addingTimeInterval(20))
+        #expect(items.map(\.text) == ["новое", "старое"])
+        #expect(items.map(\.threadKey) == ["app:2", "app:1"])
+    }
+
     @Test func limitRespected() throws {
         let s = try store()
         for i in 0..<20 {
@@ -72,5 +83,14 @@ import Foundation
         let items = try s.recentItems(threadKey: "app:1", limit: 5, now: t0.addingTimeInterval(100))
         #expect(items.count == 5)
         #expect(items.first?.text == "n19")   // новейший
+    }
+
+    @Test func v2MigrationKeepsContextItems() throws {
+        let s = try store()
+        try s.record(threadKey: "app:1", kind: .message, text: "выжил после v2", now: t0)
+        // запись в suggestion_event идёт через SuggestionEventStore (Plan 02 Task 2),
+        // здесь проверяем что v1-данные не потеряны после применения v2-миграции в init
+        let items = try s.recentItems(threadKey: "app:1", now: t0.addingTimeInterval(5))
+        #expect(items.map(\.text) == ["выжил после v2"])
     }
 }

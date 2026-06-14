@@ -129,9 +129,16 @@ final class InputMonitor {
             case .none:
                 if keyCode == 51 {
                     onEvent?(.backspace)
+                } else if KeyClassify.isCaretNavigation(keyCode: keyCode) {
+                    // Стрелки/Home/End/PageUp/PageDown двигают каретку - сбрасываем
+                    // фолбэк-буфер, как при клике. Раньше их functional-символ (U+F70x)
+                    // уходил в didType и загрязнял буфер: freshness вечно false,
+                    // подсказки молчали до следующего клика.
+                    onEvent?(.caretMayHaveMoved)
                 } else if let ns = NSEvent(cgEvent: event),
                           let chars = ns.characters,
                           !chars.isEmpty,
+                          !KeyClassify.isFunctionKeyChars(chars),
                           chars.first.map({ !$0.isNewline }) == true {
                     onEvent?(.didType(chars))
                 }

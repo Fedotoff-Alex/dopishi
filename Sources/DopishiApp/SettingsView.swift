@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @ObservedObject var vm: SettingsViewModel
+    @State private var newDictWord = ""
 
     var body: some View {
         Form {
@@ -33,7 +34,7 @@ struct SettingsView: View {
             } header: {
                 Text("Контекст")
             } footer: {
-                Text("Подсказки учитывают текст вокруг поля (тема письма, собеседник, заголовок), недавно скопированный текст и историю того, что вы писали в этом окне. Всё локально (SQLite на вашем Mac), ничего не уходит в сеть. OCR требует «Запись экрана». Буфер подмешивается только если свежий (<5 мин) и пересекается с тем, что вы печатаете. Память хранится до 14 дней, секреты не записываются. Ничего не работает в secure-полях и исключённых приложениях.")
+                Text("Подсказки учитывают текст вокруг поля (тема письма, собеседник, заголовок), недавно скопированный текст и историю того, что вы писали в этом окне. Всё локально (SQLite на вашем Mac), ничего не уходит в сеть. OCR требует «Запись экрана». Буфер подмешивается только если свежий (<5 мин) и пересекается с тем, что вы печатаете. Память хранится 7 дней (настраивается в «Приватность…»), секреты не записываются. Ничего не работает в secure-полях и исключённых приложениях.")
                     .font(.caption).foregroundStyle(.secondary)
             }
 
@@ -47,7 +48,7 @@ struct SettingsView: View {
                         value: $vm.config.maxCompletionWords, in: 1...12)
             }
 
-            Section("Модель") {
+            Section {
                 ForEach(vm.modelRows) { row in
                     HStack(spacing: 12) {
                         Image(systemName: row.selected ? "checkmark.circle.fill" : "circle")
@@ -60,11 +61,25 @@ struct SettingsView: View {
                         Spacer()
                         if row.downloading {
                             ProgressView(value: vm.downloadProgress).frame(width: 90)
+                            Button("Отмена") { vm.cancelDownload() }
+                                .help("Прервать загрузку - продолжится с того же места")
                         } else if row.selected {
                             Text("используется").font(.caption).foregroundStyle(.secondary)
+                            Button("Скорость") { vm.benchCurrentModel() }
+                                .disabled(vm.benchRunning || !row.downloaded)
+                                .help("Бенчмарк: скорость генерации этой модели на вашем Mac")
                         } else {
                             Button(row.downloaded ? "Выбрать" : "Скачать") { vm.choose(modelId: row.id) }
                                 .disabled(vm.downloadingId != nil)
+                            if row.deletable {
+                                Button {
+                                    vm.deleteModel(modelId: row.id)
+                                } label: {
+                                    Image(systemName: "trash").foregroundStyle(.secondary)
+                                }
+                                .buttonStyle(.plain)
+                                .help("Удалить модель с диска")
+                            }
                         }
                     }
                     .padding(.vertical, 4)
@@ -72,6 +87,14 @@ struct SettingsView: View {
                 if !vm.statusText.isEmpty {
                     Text(vm.statusText).font(.caption).foregroundStyle(.secondary)
                 }
+                if !vm.modelsTotalText.isEmpty {
+                    Text(vm.modelsTotalText).font(.caption).foregroundStyle(.secondary)
+                }
+            } header: {
+                Text("Модель")
+            } footer: {
+                Text("\(vm.ramRecommendationText) Загрузка проверяется по контрольной сумме (sha256); прерванная - продолжается с места отмены.")
+                    .font(.caption).foregroundStyle(.secondary)
             }
 
             Section {
@@ -87,6 +110,32 @@ struct SettingsView: View {
             }
 
             Section {
+                HStack {
+                    TextField("Добавить слово…", text: $newDictWord)
+                        .onSubmit { addWord() }
+                    Button("Добавить") { addWord() }
+                        .disabled(newDictWord.trimmingCharacters(in: .whitespaces).isEmpty)
+                }
+                ForEach(vm.config.customDictionary, id: \.self) { word in
+                    HStack {
+                        Text(word)
+                        Spacer()
+                        Button {
+                            vm.removeDictionaryWord(word)
+                        } label: {
+                            Image(systemName: "minus.circle.fill").foregroundStyle(.secondary)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            } header: {
+                Text("Личный словарь")
+            } footer: {
+                Text("Слова отсюда не считаются опечаткой и не предлагаются к исправлению - имена, проекты, термины, сленг (как игнор-словарь PuntoSwitcher).")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+
+            Section {
                 TextField("Напр.: пиши кратко и по-деловому, без воды",
                           text: $vm.config.writingInstructions, axis: .vertical)
                     .lineLimit(2...5)
@@ -94,6 +143,18 @@ struct SettingsView: View {
                 Text("Указания по стилю")
             } footer: {
                 Text("Подмешиваются в начало промпта, влияют на стиль/тон продолжений. Пусто - без указаний.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+
+            Section {
+                TextField("sig: С уважением, Алекс\naddr: Павловская 27с1",
+                          text: $vm.config.snippetsRaw, axis: .vertical)
+                    .lineLimit(3...8)
+                    .font(.system(.body, design: .monospaced))
+            } header: {
+                Text("Сниппеты")
+            } footer: {
+                Text("Одна строка = «имя: текст». Набери :имя и нажми Tab - текст вставится. Встроенные: :date (дата) и :time (время).")
                     .font(.caption).foregroundStyle(.secondary)
             }
 
@@ -127,5 +188,10 @@ struct SettingsView: View {
         .onChange(of: vm.config) { _, _ in
             vm.persist()
         }
+    }
+
+    private func addWord() {
+        vm.addDictionaryWord(newDictWord)
+        newDictWord = ""
     }
 }

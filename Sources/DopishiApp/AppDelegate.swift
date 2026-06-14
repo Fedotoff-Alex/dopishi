@@ -1,6 +1,7 @@
 import AppKit
 import DopishiCore
 import DopishiLLM
+import DopishiMemory
 import SwiftUI
 
 @MainActor
@@ -10,10 +11,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var probe: ContextProbe?
     private let hud = DebugHUD()
     private let suggestions = SuggestionController()
+    private let selectionActions = SelectionActionController()
     private let wordProcessor = WordCompletionProcessor()
+    private let adaptivePolicy = AdaptivePolicyCenter()
     private let settingsStore = SettingsStore()
     private lazy var settingsVM = SettingsViewModel(store: settingsStore)
     private var settingsWindow: NSWindow?
+    private let diagnostics = DiagnosticsCenter()
+    private var diagnosticsWindow: NSWindow?
+    private var privacyWindow: NSWindow?
+    private var onboardingWindow: NSWindow?
     private var monitorRunning = false
     private var lastSystemAutocorrectDisabled: Bool?
 
@@ -38,6 +45,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.applyScreenContext(s.screenContextEnabled, requestPermission: true)
             self?.probe?.clipboardEnabled = s.enabled && s.clipboardContextEnabled
             self?.probe?.setMemoryEnabled(s.enabled && s.memoryEnabled)
+            // Privacy Center (Phase 4): TTL и «не учиться в этом приложении» - на лету.
+            self?.probe?.memoryProvider.ttlDays = s.memoryTTLDays
+            self?.probe?.memoryProvider.learningExcluded = Set(s.memoryExcludedBundleIds)
+            self?.applyTelemetry(s.suggestionTelemetryEnabled)
         }
         let initialSettings = settingsStore.load()
         suggestions.applySettings(initialSettings)
@@ -50,18 +61,33 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let probe = ContextProbe()
         probe.onContext = { [weak self] ctx in
             self?.hud.update(Self.render(ctx))
+            self?.diagnostics.setContext(ctx)
             self?.suggestions.contextUpdated(ctx)
         }
+        probe.onAXReadMs = { [weak self] ms in self?.diagnostics.recordAXReadMs(ms) }
         probe.onSuggest = { [weak self] in
             self?.suggestions.requestSuggestion()
         }
-        probe.onAccept = { [weak self] in self?.suggestions.accept() }
-        probe.onAcceptAll = { [weak self] in self?.suggestions.acceptAll() }
+        probe.onAccept = { [weak self] in
+            guard let self else { return }
+            // Превью действия над выделением активно - Tab заменяет выделение, не подсказку.
+            if self.selectionActions.isActive { self.selectionActions.acceptReplace() }
+            else { self.suggestions.accept() }
+        }
+        probe.onAcceptAll = { [weak self] in
+            guard let self else { return }
+            if self.selectionActions.isActive { self.selectionActions.acceptReplace() }
+            else { self.suggestions.acceptAll() }
+        }
         probe.onContinueAfterAccept = { [weak self] ctx in
             self?.hud.update(Self.render(ctx))
             self?.suggestions.continueAfterAccept(ctx)
         }
-        probe.onDismiss = { [weak self] in self?.suggestions.dismiss() }
+        probe.onDismiss = { [weak self] in
+            guard let self else { return }
+            if self.selectionActions.isActive { self.selectionActions.dismiss() }
+            else { self.suggestions.dismiss() }
+        }
         probe.onUndo = { [weak self] in self?.wordProcessor.undoLast() }
         probe.onWordCompleted = { [weak self] text in self?.wordProcessor.wordCompleted(precedingText: text) ?? false }
         probe.onLayoutSwitch = { [weak self] text, selected in
@@ -71,25 +97,109 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         probe.enhancedUIEnabled = initialSettings.electronSupport
         probe.clipboardEnabled = initialSettings.enabled && initialSettings.clipboardContextEnabled
         probe.setMemoryEnabled(initialSettings.enabled && initialSettings.memoryEnabled)
-        settingsVM.onClearMemory = { [weak self] in self?.probe?.memoryProvider.clear() }
+        probe.memoryProvider.ttlDays = initialSettings.memoryTTLDays
+        probe.memoryProvider.learningExcluded = Set(initialSettings.memoryExcludedBundleIds)
+        settingsVM.onClearMemory = { [weak self] in
+            self?.probe?.memoryProvider.clear()
+            self?.adaptivePolicy.invalidate()   // статистика стёрта - кэш политики тоже
+            let store = self?.suggestions.eventStore
+            Task { await store?.clearAll() }
+        }
+        // MEM-02: adaptive policy per-app. Контроллер спрашивает параметры синхронно,
+        // центр держит кэш статистики и освежает его фоном.
+        suggestions.adaptiveParamsProvider = { [weak self] appId, global in
+            self?.adaptivePolicy.params(for: appId, global: global) ?? global
+        }
+        settingsVM.onExportMemory = { [weak self] in self?.exportMemory() }
+        settingsVM.memoryDbSizeProvider = { [weak self] in self?.probe?.memoryProvider.dbSizeBytes() }
+        // UX-04: бенчмарк текущей модели - через контроллер (движок приватен там).
+        settingsVM.onBenchModel = { [weak self] in await self?.suggestions.benchCurrentModel() }
         suggestions.onActiveChanged = { [weak self] active in self?.probe?.setSuggestionActive(active) }
+        // Действия над выделением (UX-03): хоткей с выделением -> меню -> превью -> Tab/Esc.
+        suggestions.onSelectionActions = { [weak self] ctx in self?.selectionActions.present(ctx: ctx) }
+        selectionActions.transform = { [weak self] text, action in
+            await self?.suggestions.transformSelection(text, action: action)
+        }
+        selectionActions.onActiveChanged = { [weak self] active in self?.probe?.setSuggestionActive(active) }
+        suggestions.onOutcome = { [weak self] outcome in self?.diagnostics.setOutcome(outcome) }
+        suggestions.onAcceptedSuggestion = { [weak self, weak probe] text, _ in
+            guard let probe, probe.memoryProvider.enabled, let key = probe.lastMemThreadKey else { return }
+            probe.memoryProvider.record(threadKey: key, kind: .accepted, text: text)
+            self?.suggestions.predictorLearn(text)   // PERF-03: предиктор учится сразу
+        }
+        // PERF-03: начальная загрузка предиктора из памяти (пусто при выключенной памяти).
+        suggestions.predictorBulkLearn(probe.memoryProvider.predictorTexts())
         monitorRunning = probe.start()
         if !monitorRunning {
             NSLog("ContextProbe: не стартовал (нет Input Monitoring?)")
         }
         self.probe = probe
+        // Гейт телеметрии: SuggestionEventStore существует ТОЛЬКО при включённой телеметрии
+        // (с Phase 4 default-ON, контроль в Privacy Center). storeQueue лениво создаёт
+        // memory.sqlite - без гейта база материализовалась бы при выключенной телеметрии.
+        applyTelemetry(initialSettings.suggestionTelemetryEnabled)
         // Призрак прячем при смене активного приложения: если фокус ушёл в другое окно без
         // нажатия клавиши, подсказка в прежнем поле осиротеет и «зависнет». Cotabby так же гасит
         // overlay на resign-key/space-change. Закрывает случай «остался висеть призрак».
         NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main
         ) { [weak self] _ in
-            MainActor.assumeIsolated { self?.suggestions.dismiss() }   // queue:.main -> мы на главном
+            MainActor.assumeIsolated {
+                self?.suggestions.hideOnFocusLoss()
+                self?.selectionActions.dismiss()   // превью выделения тоже не должно осиротеть
+            }   // queue:.main -> мы на главном
         }
         // Стартовое состояние OCR-контекста (без запроса прав - только при включении тумблера).
         applyScreenContext(initialSettings.screenContextEnabled, requestPermission: false)
         if ProcessInfo.processInfo.environment["DOPISHI_DEBUG_HUD"] == "1" {
             hud.show()
+        }
+        // Мастер первого запуска (Phase 4, UX-01): пока не пройден - показываем на старте.
+        if !initialSettings.onboardingCompleted {
+            openOnboarding()
+        }
+    }
+
+    /// Включить/выключить запись событий подсказок на лету (Privacy Center).
+    /// Включение создаёт SuggestionEventStore (и memory.sqlite, если её ещё нет);
+    /// выключение отцепляет store - новые события не пишутся, диагностика без метрик.
+    private func applyTelemetry(_ enabled: Bool) {
+        let on = enabled || ProcessInfo.processInfo.environment["DOPISHI_TELEMETRY"] == "1"
+        if on {
+            guard suggestions.eventStore == nil, let probe,
+                  let queue = probe.memoryProvider.storeQueue else { return }
+            let eventStore = SuggestionEventStore(dbQueue: queue)
+            suggestions.eventStore = eventStore
+            diagnostics.setEventStore(eventStore)
+            adaptivePolicy.eventStore = eventStore
+            // prune старых событий в фоне на старте/включении (TTL 7 дней)
+            Task.detached(priority: .utility) { _ = await eventStore.prune() }
+        } else if suggestions.eventStore != nil {
+            suggestions.eventStore = nil
+            diagnostics.setEventStore(nil)
+            adaptivePolicy.eventStore = nil   // didSet чистит кэш - policy вернулась к global
+        }
+    }
+
+    /// Экспорт памяти в JSON-файл (Privacy Center): NSSavePanel + фоновая выгрузка.
+    private func exportMemory() {
+        let panel = NSSavePanel()
+        panel.nameFieldStringValue = "dopishi-memory.json"
+        panel.allowedContentTypes = [.json]
+        NSApp.activate(ignoringOtherApps: true)
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        guard let provider = probe?.memoryProvider else { return }
+        Task { @MainActor in
+            let data = await provider.exportJSON()
+            do {
+                guard let data else { throw CocoaError(.fileWriteUnknown) }
+                try data.write(to: url)
+            } catch {
+                let alert = NSAlert()
+                alert.messageText = "Не удалось экспортировать память"
+                alert.informativeText = error.localizedDescription
+                alert.runModal()
+            }
         }
     }
 
@@ -123,6 +233,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let modelPresent = ModelLocator.isPresent(fileName: settings.selectedModelFile)
         let status = AppRuntimeStatus(permissions: state, monitorRunning: monitorRunning,
                                       enabled: settings.enabled, modelPresent: modelPresent)
+        diagnostics.setRuntime(DiagnosticsRuntime(
+            accessibility: state.accessibility,
+            inputMonitoring: state.inputMonitoring,
+            screenRecording: ScreenCapturePermission.has(),
+            monitorRunning: monitorRunning,
+            masterEnabled: settings.enabled,
+            modelFile: settings.selectedModelFile,
+            modelPresent: modelPresent,
+            layout: settings.enabled && settings.layoutSwitchEnabled,
+            manualLayout: settings.enabled && settings.manualLayoutSwitchEnabled,
+            autocorrect: settings.enabled && settings.autocorrectEnabled,
+            electron: settings.electronSupport,
+            clipboard: settings.enabled && settings.clipboardContextEnabled,
+            memory: settings.enabled && settings.memoryEnabled,
+            screenContext: settings.screenContextEnabled))
         if let button = statusItem.button {
             button.image = NSImage(systemSymbolName: StatusPresentation.symbolName(for: state),
                                    accessibilityDescription: "Допиши")
@@ -151,12 +276,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             menu.addItem(.separator())
         }
 
+        let diagItem = NSMenuItem(title: "Диагностика…", action: #selector(openDiagnostics), keyEquivalent: "d")
+        menu.addItem(diagItem)
         let hudItem = NSMenuItem(title: "Показать/скрыть debug-HUD", action: #selector(toggleHUD), keyEquivalent: "")
         menu.addItem(hudItem)
         menu.addItem(.separator())
 
         let settingsItem = NSMenuItem(title: "Настройки…", action: #selector(openSettings), keyEquivalent: ",")
         menu.addItem(settingsItem)
+        let privacyItem = NSMenuItem(title: "Приватность…", action: #selector(openPrivacyCenter), keyEquivalent: "")
+        menu.addItem(privacyItem)
+        let onboardingItem = NSMenuItem(title: "Мастер настройки…", action: #selector(openOnboardingFromMenu), keyEquivalent: "")
+        menu.addItem(onboardingItem)
         menu.addItem(.separator())
 
         menu.addItem(NSMenuItem(title: "Выход", action: #selector(quit), keyEquivalent: "q"))
@@ -211,5 +342,70 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.activate(ignoringOtherApps: true)
         settingsWindow?.center()
         settingsWindow?.makeKeyAndOrderFront(nil)
+    }
+
+    @objc private func openPrivacyCenter() {
+        if privacyWindow == nil {
+            let hosting = NSHostingController(rootView: PrivacyCenterView(vm: settingsVM))
+            let win = NSWindow(contentViewController: hosting)
+            win.title = "Допиши - приватность"
+            win.styleMask = [.titled, .closable]
+            win.isReleasedWhenClosed = false
+            privacyWindow = win
+        }
+        settingsVM.refreshPrivacyStats()
+        NSApp.activate(ignoringOtherApps: true)
+        privacyWindow?.center()
+        privacyWindow?.makeKeyAndOrderFront(nil)
+    }
+
+    @objc private func openOnboardingFromMenu() {
+        openOnboarding()
+    }
+
+    /// Окно мастера первого запуска (Phase 4, UX-01). Завершение помечает
+    /// onboardingCompleted и закрывает окно.
+    private func openOnboarding() {
+        if onboardingWindow == nil {
+            let vm = OnboardingViewModel(
+                settingsVM: settingsVM,
+                monitorRunning: { [weak self] in self?.monitorRunning ?? false },
+                retryMonitor: { [weak self] in
+                    guard let self, let probe = self.probe, !self.monitorRunning else { return }
+                    self.monitorRunning = probe.start()
+                })
+            vm.onFinished = { [weak self] in
+                guard let self else { return }
+                self.settingsVM.config.onboardingCompleted = true
+                self.settingsVM.persist()
+                self.onboardingWindow?.close()
+            }
+            let hosting = NSHostingController(rootView: OnboardingView(vm: vm))
+            let win = NSWindow(contentViewController: hosting)
+            win.title = "Добро пожаловать в Допиши"
+            win.styleMask = [.titled, .closable]
+            win.isReleasedWhenClosed = false
+            onboardingWindow = win
+        }
+        NSApp.activate(ignoringOtherApps: true)
+        onboardingWindow?.center()
+        onboardingWindow?.makeKeyAndOrderFront(nil)
+    }
+
+    @objc private func openDiagnostics() {
+        if diagnosticsWindow == nil {
+            let hosting = NSHostingController(rootView: DiagnosticsView(center: diagnostics))
+            let win = NSWindow(contentViewController: hosting)
+            win.title = "Допиши - диагностика"
+            win.styleMask = [.titled, .closable]
+            win.isReleasedWhenClosed = false
+            diagnosticsWindow = win
+        }
+        // Свежий снимок прав/модели сразу при открытии (не ждём 2-секундный таймер).
+        refresh()
+        Task { @MainActor in await diagnostics.refreshLatencyMetrics() }
+        NSApp.activate(ignoringOtherApps: true)
+        diagnosticsWindow?.center()
+        diagnosticsWindow?.makeKeyAndOrderFront(nil)
     }
 }

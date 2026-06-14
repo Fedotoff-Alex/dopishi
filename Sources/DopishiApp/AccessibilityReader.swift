@@ -4,6 +4,7 @@ import DopishiCore
 
 struct AXReadResult: Equatable {
     var text: String?        // текст до каретки (nil, если недоступен)
+    var followingText: String = ""   // текст сразу после каретки (хвост окна, до ~200 ед.)
     var caretRect: CGRect?   // экранный rect каретки (nil, если недоступен)
     var appBundleId: String?
     var isSecure: Bool
@@ -36,28 +37,94 @@ enum AccessibilityReader {
         }
         let element = focusedRef as! AXUIElement
 
-        // Secure-поле -> ничего не читаем.
+        // Secure-поле -> ничего не читаем. Subrole check остаётся ПЕРВЫМ и per-read (не кэшируется).
         if copyStringAttr(element, kAXSubroleAttribute as CFString) == (kAXSecureTextFieldSubrole as String) {
             return AXReadResult(text: nil, caretRect: nil, appBundleId: appBundleId, isSecure: true)
         }
 
-        let fullText = copyStringAttr(element, kAXValueAttribute as CFString)
-        let caretLocation = copyCaretLocation(element)
+        // Инвалидация кэшей при смене focused element (вкл. переход secure -> non-secure поля).
+        let key = AXElementKey(element: element)
+        if lastElementKey != key {
+            fontCache.removeAll(keepingCapacity: true)
+            windowCache.removeAll(keepingCapacity: true)
+            noRangeElements.removeAll(keepingCapacity: true)
+            lastElementKey = key
+        }
 
-        var precedingText: String? = nil
-        if let fullText {
-            if let loc = caretLocation {
-                precedingText = TextPrefix.byUTF16Offset(fullText, offset: loc)
+        let caretLocation = copyCaretLocation(element)
+        var windowText: String? = nil
+        var windowAdjustedStart = 0
+
+        // Range-read только при известной каретке и если элемент не помечен no-range (D-04).
+        if let caret = caretLocation, !noRangeElements.contains(key) {
+            let total = copyTotalLength(element)
+            let range = makeWindowRange(caret: caret, total: total)
+            if let raw = copyStringForRange(element, range: range) {
+                // D-06: дропаем возможно-неполный первый/последний grapheme cluster, если рез не от
+                // края текста. cutAtStart - range начинается не с 0. cutAtEnd - total известен и
+                // range не доходит до конца; если total неизвестен - считаем рез у конца (AX сам
+                // обрезал бы, если просили за конец), т.е. не дропаем последний cluster.
+                let cutAtStart = range.location > 0
+                let cutAtEnd: Bool = {
+                    if let total { return (range.location + range.length) < total }
+                    return false  // total неизвестен - не дропаем последний cluster
+                }()
+                let (slice, droppedStart) = WindowSanitizer.dropEdgeClusters(
+                    raw, cutAtStart: cutAtStart, cutAtEnd: cutAtEnd)
+                // Абсолютный старт окна = range.location + droppedStart.
+                windowText = slice
+                windowAdjustedStart = range.location + droppedStart
             } else {
-                precedingText = fullText
+                // D-05: range-read не дал результата -> пометить элемент no-range, дальше всегда full.
+                noRangeElements.insert(key)
             }
         }
 
-        let caretRect = resolveCaretRect(element, location: caretLocation)
-        let font = caretLocation.flatMap { copyCaretFont(element, location: $0) }
-        let (winId, winFrame) = focusedWindowInfo(element, appPid: frontApp?.processIdentifier)
+        // D-05 fallback: полный kAXValue, если окно не получили (нет каретки / ошибка / no-range).
+        let fullText: String? = (windowText == nil) ? copyStringAttr(element, kAXValueAttribute as CFString) : nil
 
-        return AXReadResult(text: precedingText, caretRect: caretRect, appBundleId: appBundleId, isSecure: false, caretFontName: font?.fontName, caretFontSize: font?.pointSize, selectedText: copySelectedText(element), focusedWindowId: winId, focusedWindowFrame: winFrame)
+        var precedingText: String? = nil
+        var followingText = ""        // хвост окна после каретки - для гейта «каретка в середине текста»
+        if let wt = windowText, let caret = caretLocation {
+            // Pitfall 2: offset внутри окна = caret - абсолютный старт окна.
+            let pre = TextPrefix.byUTF16Offset(wt, offset: caret - windowAdjustedStart)
+            precedingText = pre
+            followingText = String(wt.dropFirst(pre.count))
+        } else if let ft = fullText {
+            if let loc = caretLocation {
+                let pre = TextPrefix.byUTF16Offset(ft, offset: loc)
+                precedingText = pre
+                followingText = String(ft.dropFirst(pre.count).prefix(200))
+            } else { precedingText = ft }   // Pitfall 5: caret == nil -> полный текст (старое поведение)
+        }
+
+        let caretRect = resolveCaretRect(element, location: caretLocation,
+                                         afterNewline: precedingText?.hasSuffix("\n") == true)
+
+        // Кэш font по element identity (SC-2: нет нового AX-запроса без смены элемента).
+        let font: NSFont?
+        if let cached = fontCache[key] {
+            font = cached
+        } else {
+            font = caretLocation.flatMap { copyCaretFont(element, location: $0) }
+            if let font { fontCache[key] = font }
+        }
+
+        // Кэш focused window по element identity.
+        // Кэшируем только при ненулевом winId: (nil, nil) означает что окно ещё не появилось
+        // в CGWindowList, следующий read() должен повторить попытку.
+        let (winId, winFrame): (CGWindowID?, CGRect?)
+        if let cached = windowCache[key] {
+            (winId, winFrame) = cached
+        } else {
+            let resolved = focusedWindowInfo(element, appPid: frontApp?.processIdentifier)
+            if resolved.0 != nil {
+                windowCache[key] = resolved
+            }
+            (winId, winFrame) = resolved
+        }
+
+        return AXReadResult(text: precedingText, followingText: followingText, caretRect: caretRect, appBundleId: appBundleId, isSecure: false, caretFontName: font?.fontName, caretFontSize: font?.pointSize, selectedText: copySelectedText(element), focusedWindowId: winId, focusedWindowFrame: winFrame)
     }
 
     /// CGWindowID + экранная рамка окна сфокусированного элемента (для OCR-захвата).
@@ -109,10 +176,25 @@ enum AccessibilityReader {
 
     // MARK: - helpers
 
+    /// Ключ кэша по идентичности AXUIElement. CFEqual/CFHash стабильны для одного элемента
+    /// (VERIFIED RESEARCH Паттерн 4). AXUIElement opaque -> не Hashable напрямую.
+    private struct AXElementKey: Hashable {
+        let element: AXUIElement
+        func hash(into hasher: inout Hasher) { hasher.combine(CFHash(element)) }
+        static func == (lhs: AXElementKey, rhs: AXElementKey) -> Bool { CFEqual(lhs.element, rhs.element) }
+    }
+
     /// pid приложений, которым уже включили AX-bridge / которые его не поддерживают.
     /// read() вызывается только с главного потока (ContextProbe.recompute @MainActor) - гонок нет.
     private nonisolated(unsafe) static var manualAXPids = Set<pid_t>()
     private nonisolated(unsafe) static var unsupportedAXPids = Set<pid_t>()
+
+    /// Кэши по идентичности элемента. read() только с главного потока (@MainActor) - локов нет.
+    private nonisolated(unsafe) static var noRangeElements = Set<AXElementKey>()
+    private nonisolated(unsafe) static var fontCache: [AXElementKey: NSFont] = [:]
+    private nonisolated(unsafe) static var windowCache: [AXElementKey: (CGWindowID?, CGRect?)] = [:]
+    /// Последний обработанный элемент - для инвалидации кэшей при смене фокуса (вкл. secure->non-secure).
+    private nonisolated(unsafe) static var lastElementKey: AXElementKey?
 
     /// Будим ленивое accessibility-дерево Electron/Chromium (тогда отдаёт текст/каретку).
     /// Способ Cotabby: AXManualAccessibility на app-элементе (по pid) - без побочки на оконные
@@ -135,6 +217,35 @@ enum AccessibilityReader {
         var ref: CFTypeRef?
         guard AXUIElementCopyAttributeValue(element, attr, &ref) == .success else { return nil }
         return ref as? String
+    }
+
+    /// Полная длина поля в UTF-16 (один CFNumber IPC). nil -> Electron может не поддерживать;
+    /// тогда окно не clamp-ится по концу (AX clamp-ит сам в нативных полях, либо D-05 fallback).
+    private static func copyTotalLength(_ element: AXUIElement) -> Int? {
+        var ref: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(element, kAXNumberOfCharactersAttribute as CFString, &ref) == .success,
+              let n = ref as? NSNumber else { return nil }
+        return n.intValue
+    }
+
+    /// Окно range-чтения (D-01): 800 UTF-16 единиц ДО каретки + 200 ПОСЛЕ. start clamp 0,
+    /// end clamp totalLength если известна. 200 после - задел под mid-word логику (тот же IPC).
+    private static func makeWindowRange(caret: Int, total: Int?) -> CFRange {
+        let start = max(0, caret - 800)
+        let end: Int
+        if let total { end = min(total, caret + 200) } else { end = caret + 200 }
+        return CFRange(location: start, length: max(0, end - start))
+    }
+
+    /// Range-чтение текста (kAXStringForRange). nil при ЛЮБОЙ ошибке или не-String/пустом результате.
+    private static func copyStringForRange(_ element: AXUIElement, range: CFRange) -> String? {
+        var r = range
+        guard let axRange = AXValueCreate(.cfRange, &r) else { return nil }
+        var ref: CFTypeRef?
+        guard AXUIElementCopyParameterizedAttributeValue(
+                element, kAXStringForRangeParameterizedAttribute as CFString, axRange, &ref) == .success,
+              let s = ref as? String, !s.isEmpty else { return nil }
+        return s
     }
 
     private static func copyCaretLocation(_ element: AXUIElement) -> Int? {
@@ -231,12 +342,29 @@ enum AccessibilityReader {
     /// Лучшая доступная позиция каретки: сперва стандартный bounds (нативные поля),
     /// при отсутствии/битом результате - AXTextMarker (Electron/Chromium),
     /// третий вариант - Branch 2 по правому краю символа перед кареткой.
-    private static func resolveCaretRect(_ element: AXUIElement, location: Int?) -> CGRect? {
+    /// afterNewline: каретка стоит сразу после "\n" (начало новой строки) - prevChar-ветку
+    /// пропускаем: правый край "\n" лежит в КОНЦЕ предыдущей строки, и ghost повисал бы
+    /// в воздухе справа от старого текста (видно после Enter).
+    private static func resolveCaretRect(_ element: AXUIElement, location: Int?,
+                                         afterNewline: Bool = false) -> CGRect? {
         // prevChar (rect ПОСЛЕДНЕГО глифа, правый край) - первым: NSTextView (TextEdit/Telegram и
         // др. нативные поля) отдаёт bounds НУЛЕВОГО диапазона на высоту строки ВЫШЕ реального глифа
         // (замерено: zeroRange Y=406, prevChar Y=420, ровно на строку, даже выше верха поля). X у
         // prevChar тот же. На Electron prevChar/zero-range битые (isPlausibleCaret их отсечёт) -
         // там остаётся textMarker, поведение не меняется.
+        if afterNewline {
+            // Начало новой строки: zero-range bounds в NSTextView лежит на строку ВЫШЕ
+            // реальной позиции (та же калибровка, что в комментарии ниже) - сдвигаем вниз
+            // на высоту строки, получая настоящее место вставки. В Electron zero-range
+            // битый (isPlausibleCaret отсечёт) - там остаётся textMarker, он точен.
+            if let loc = location, let rect = copyCaretRect(element, location: loc), isPlausibleCaret(rect) {
+                return CGRect(x: rect.minX, y: rect.minY + rect.height, width: rect.width, height: rect.height)
+            }
+            if let rect = textMarkerCaretRect(element), isPlausibleCaret(rect) {
+                return rect
+            }
+            return nil
+        }
         if let loc = location, loc > 0, let rect = prevCharCaretRect(element, location: loc), isPlausibleCaret(rect) {
             return rect
         }

@@ -10,6 +10,10 @@ public struct EditingContext: Sendable, Equatable {
     public let caretFontName: String?
     public let caretFontSize: CGFloat?
     public let selectedText: String?
+    /// Текст СРАЗУ ПОСЛЕ каретки (хвост окна чтения, до ~200 UTF-16 единиц). Пустой, когда
+    /// каретка в конце текста. Нужен гейту «каретка в середине текста»: ghost рисуется
+    /// вправо от каретки и лёг бы ПОВЕРХ этого текста.
+    public let followingText: String
     /// Текст, набранный с клавиатуры с момента фокуса/сброса (KeystrokeBuffer). Это
     /// НЕМЕДЛЕННАЯ правда о наборе (CGEventTap не лагает), в отличие от precedingText из AX,
     /// который в Electron отстаёт. Пусто, если буфера нет (вставка, после клика).
@@ -22,7 +26,8 @@ public struct EditingContext: Sendable, Equatable {
     /// Снимок локальной памяти потока (опц. канал «Память:»). nil когда фича off/secure/excluded/пусто.
     public let memory: String?
 
-    public init(precedingText: String, caretScreenRect: CGRect?, appBundleId: String?, capability: CapabilityTier, isSecure: Bool, caretFontName: String? = nil, caretFontSize: CGFloat? = nil, selectedText: String? = nil, typedSinceFocus: String = "", ocr: OCRContext? = nil, clipboard: String? = nil, memory: String? = nil) {
+    public init(precedingText: String, caretScreenRect: CGRect?, appBundleId: String?, capability: CapabilityTier, isSecure: Bool, caretFontName: String? = nil, caretFontSize: CGFloat? = nil, selectedText: String? = nil, typedSinceFocus: String = "", ocr: OCRContext? = nil, clipboard: String? = nil, memory: String? = nil, followingText: String = "") {
+        self.followingText = followingText
         self.precedingText = precedingText
         self.caretScreenRect = caretScreenRect
         self.appBundleId = appBundleId
@@ -42,7 +47,8 @@ public struct EditingContext: Sendable, Equatable {
         EditingContext(precedingText: text, caretScreenRect: caretScreenRect, appBundleId: appBundleId,
                        capability: capability, isSecure: isSecure, caretFontName: caretFontName,
                        caretFontSize: caretFontSize, selectedText: selectedText,
-                       typedSinceFocus: typedSinceFocus, ocr: ocr, clipboard: clipboard, memory: memory)
+                       typedSinceFocus: typedSinceFocus, ocr: ocr, clipboard: clipboard, memory: memory,
+                       followingText: followingText)
     }
 }
 
@@ -63,7 +69,8 @@ public enum EditingContextBuilder {
         keystrokeText: String = "",
         ocr: OCRContext? = nil,
         clipboard: String? = nil,
-        memory: String? = nil
+        memory: String? = nil,
+        axFollowingText: String = ""
     ) -> EditingContext {
         if isSecure {
             // secure-поле: ни текста, ни OCR (не захватываем секреты).
@@ -84,7 +91,8 @@ public enum EditingContextBuilder {
             typedSinceFocus: keystrokeText,
             ocr: ocr,
             clipboard: clipboard,
-            memory: memory
+            memory: memory,
+            followingText: axFollowingText
         )
     }
 }

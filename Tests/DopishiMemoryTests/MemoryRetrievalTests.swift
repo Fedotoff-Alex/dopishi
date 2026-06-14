@@ -40,4 +40,34 @@ import Foundation
         #expect(r.count <= 20)
         #expect(r.hasPrefix("a"))
     }
+
+    // MEM-01: микс «свежее + релевантное».
+
+    @Test func mixedMergesByTimeChronologicalOutput() {
+        // relevant старее recent - в выводе идёт раньше (хронология сохраняется).
+        let recent = [item("новое", 30)]
+        let relevant = [item("старое в тему", 10)]
+        #expect(MemoryRetrieval.formatMixed(recent: recent, relevant: relevant)
+                == "старое в тему новое")
+    }
+
+    @Test func mixedDeduplicatesByText() {
+        let recent = [item("совпадает", 30), item("только в recent", 20)]
+        let relevant = [item("совпадает", 30)]   // FTS вернул то же, что уже в recent
+        #expect(MemoryRetrieval.formatMixed(recent: recent, relevant: relevant)
+                == "только в recent совпадает")
+    }
+
+    @Test func mixedEmptyRelevantEqualsPlainFormat() {
+        let recent = [item("второе", 20), item("первое", 10)]
+        #expect(MemoryRetrieval.formatMixed(recent: recent, relevant: [])
+                == MemoryRetrieval.format(recent))
+    }
+
+    @Test func mixedRespectsBudgetNewestPriority() {
+        // Бюджет мал: новейшие выживают, старое-релевантное отваливается первым.
+        let recent = [item("ccc", 30)]
+        let relevant = [item("bbb", 20), item("aaa", 10)]
+        #expect(MemoryRetrieval.formatMixed(recent: recent, relevant: relevant, maxChars: 7) == "ccc")
+    }
 }

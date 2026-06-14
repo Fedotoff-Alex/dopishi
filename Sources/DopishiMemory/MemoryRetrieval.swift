@@ -27,4 +27,19 @@ public enum MemoryRetrieval {
         // Разворот -> хронологический порядок (старое -> новое).
         return taken.reversed().joined(separator: " ")
     }
+
+    /// Микс «свежее + релевантное» (MEM-01): к свежим записям потока добавляются
+    /// FTS5-находки по набираемому тексту - старое-но-в-тему всплывает, чего
+    /// recency-only не умел. Дедуп по тексту, общая сортировка по времени (новейшие
+    /// первыми), дальше тот же бюджет/порядок, что у format().
+    public static func formatMixed(recent: [MemoryItem], relevant: [MemoryItem],
+                                   maxChars: Int = 600) -> String {
+        var seen = Set<String>()
+        var combined: [MemoryItem] = []
+        for item in recent + relevant where seen.insert(item.text).inserted {
+            combined.append(item)
+        }
+        combined.sort { $0.createdAt > $1.createdAt }
+        return format(combined, maxChars: maxChars)
+    }
 }
