@@ -27,16 +27,21 @@ final class WordCompletionProcessor {
         guard layoutEnabled else { return false }
         guard let boundary = text.last, WordBoundary.isBoundary(boundary) else { return false }
         let word = WordEdit.lastWord(of: text)
-        guard word.count >= 2 else { return false }
+        // >= 1: однобуквенные предлоги/союзы (в/с/к/о/у) тоже конвертим - решение
+        // контекстно-зависимое (см. tryLayout), так что одиночное англ. "a"/"I" в англ.
+        // контексте не тронем.
+        guard word.count >= 1 else { return false }
         let bnd = String(boundary)
+        // Язык соседнего текста (перед токеном) - для контекстного решения о свитче.
+        let ctxScript = Self.contextScript(of: text)
 
         if layoutEnabled {
             // Сначала целый спейс-токен: слова с б/ю в EN-раскладке ("будет"=",eltn",
             // "любой"="k.,jq") содержат , и . - lastWord рвёт их на границах, и простой
             // путь такое слово не видит вовсе (репорт: "запятые и точки остаются").
             if tryTokenLayout(text: text, boundary: bnd) { return true }
-            if tryLayout(word: word, boundary: bnd, candidate: KeyboardLayout.enToRussian(word), candLang: "ru", switchTo: "ru") { return true }
-            if tryLayout(word: word, boundary: bnd, candidate: KeyboardLayout.ruToEnglish(word), candLang: "en", switchTo: "en") { return true }
+            if tryLayout(word: word, boundary: bnd, candidate: KeyboardLayout.enToRussian(word), candLang: "ru", switchTo: "ru", contextScript: ctxScript) { return true }
+            if tryLayout(word: word, boundary: bnd, candidate: KeyboardLayout.ruToEnglish(word), candLang: "en", switchTo: "en", contextScript: ctxScript) { return true }
             // Забытый CapsLock: "пРИВЕТ " -> "Привет " + выключаем сам капс. Гейт по реальному
             // состоянию CapsLock - паттерн без включённого капса (странный ручной регистр) не трогаем.
             if Self.capsLockIsOn, let fixed = CapsFix.fix(word) {
@@ -48,7 +53,7 @@ final class WordCompletionProcessor {
         }
         // Автоисправление орфографии БОЛЬШЕ НЕ подменяет слово на границе. Исправление теперь
         // ПРЕДЛАГАЕТСЯ зелёным призраком по ходу набора (SuggestionController + TypoCorrection),
-        // принимается Tab - модель Cotabby/Cotypist. Здесь остаётся только раскладка.
+        // принимается Tab (ghost-suggestion модель). Здесь остаётся только раскладка.
         return false
     }
 
@@ -94,15 +99,27 @@ final class WordCompletionProcessor {
         LayoutSwitcher.selectLayout(language: lang)
     }
 
-    private func tryLayout(word: String, boundary: String, candidate: String, candLang: String, switchTo: String) -> Bool {
+    private func tryLayout(word: String, boundary: String, candidate: String, candLang: String,
+                           switchTo: String, contextScript: Script) -> Bool {
         guard candidate != word else { return false }
         let typedLang = looksCyrillic(word) ? "ru" : "en"
         let typedIsWord = !Speller.isMisspelled(word, language: typedLang)
         let candIsWord = !Speller.isMisspelled(candidate, language: candLang)
-        guard LayoutDecision.shouldSwitch(asTypedIsWord: typedIsWord, transliteratedIsWord: candIsWord) else { return false }
+        let targetScript: Script = switchTo == "ru" ? .cyrillic : .latin
+        guard LayoutDecision.shouldSwitch(asTypedIsWord: typedIsWord, transliteratedIsWord: candIsWord,
+                                          contextScript: contextScript, targetScript: targetScript) else { return false }
         replace(word: word, boundary: convertBoundary(boundary, to: switchTo), deleting: word.count + boundary.count, with: candidate)
         LayoutSwitcher.selectLayout(language: switchTo)
         return true
+    }
+
+    /// Доминирующий скрипт текста ПЕРЕД последним токеном (контекст для решения о свитче).
+    /// "привет vs " -> контекст "привет " -> .cyrillic. Окно 64 символа - смотрим близкий
+    /// контекст, не всю строку. .neutral, если перед токеном текста нет (начало строки).
+    private static func contextScript(of text: String) -> Script {
+        let (token, trailing) = WordEdit.lastSpaceTokenWithTrailing(of: text)
+        let before = String(text.dropLast(token.count + trailing.count))
+        return TextScriptDetector.dominant(of: String(before.suffix(64)))
     }
 
     /// Целый спейс-токен с пунктуацией внутри: "k.,jq" -> "любой". Гейты: кандидат целиком

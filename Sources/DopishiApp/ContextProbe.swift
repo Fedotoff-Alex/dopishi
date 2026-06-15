@@ -38,6 +38,8 @@ final class ContextProbe {
     private var lastWindowId: CGWindowID?
     private var lastOcrPokeAt = Date.distantPast
     private var pollTask: Task<Void, Never>?
+    /// Debounce-задача OCR: запуск распознавания экрана только ПОСЛЕ паузы набора (не каждый тик).
+    private var ocrRefreshTask: Task<Void, Never>?
 
     /// OCR-контекст экрана (opt-in). AppDelegate включает provider.enabled по настройке.
     let ocrProvider = WindowOCRProvider()
@@ -81,7 +83,14 @@ final class ContextProbe {
                             self.monitor.correctionUndoable = true   // была автоправка -> Esc откатит
                         }
                     }
-                    self.scheduleElectronRecompute(previousText: ctx.precedingText)
+                    // Поллинг-перечитка нужна ТОЛЬКО когда AX отстаёт от набора (Electron-лаг).
+                    // В нативных полях синхронный recompute уже свежий -> isFresh -> поллинг бы
+                    // крутил все 5 итераций впустую (текст не меняется, ранний выход не срабатывает,
+                    // каждая итерация = полный buildContext + пайплайн + OCR). Гейтим по свежести
+                    // (контентно, без детекта bundle-id): нет лага - нет поллинга.
+                    if !ContextFreshness.isFresh(ctx) {
+                        self.scheduleElectronRecompute(previousText: ctx.precedingText)
+                    }
                 case .backspace:
                     self.pollTask?.cancel()
                     self.buffer = self.buffer.backspacing()
@@ -116,6 +125,12 @@ final class ContextProbe {
                     self.buffer = self.buffer.reset()
                 case .dismissRequested:
                     self.onDismiss?()
+                    // Esc = "перестать предлагать здесь". Сбрасываем буфер, как и все пути,
+                    // меняющие состояние поля (accept/undo/correction/layout): иначе при любом
+                    // рассинхроне буфера с AX freshness-guard НАВСЕГДА блокирует подсказки в
+                    // этом поле (вечный staleContext до смены фокуса - баг из живого UAT в
+                    // TextEdit). Бонус: Esc становится recovery-жестом, если что-то заклинило.
+                    self.buffer = self.buffer.reset()
                 case .undoRequested:
                     self.onUndo?()
                     self.buffer = self.buffer.reset()   // откат тоже инъекция - буфер невалиден
@@ -141,6 +156,7 @@ final class ContextProbe {
 
     func stop() {
         pollTask?.cancel()
+        ocrRefreshTask?.cancel()
         monitor.stop()
     }
 
@@ -163,6 +179,28 @@ final class ContextProbe {
                 let fresh = self.recompute()
                 if fresh.precedingText != previousText { return }   // AX обновился - стоп
             }
+        }
+    }
+
+    /// OCR после ПАУЗЫ набора (debounce ~700мс). Пересоздаётся на каждом тике набора, поэтому
+    /// захват экрана + Vision запускаются лишь когда пользователь остановился, а не каждую
+    /// секунду в процессе печати (главный источник нагрузки CPU/нейродвижка при включённом
+    /// контексте экрана). Смену окна обрабатываем отдельно и немедленно (см. buildContext).
+    private func scheduleOcrRefresh() {
+        ocrRefreshTask?.cancel()
+        ocrRefreshTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .milliseconds(700))
+            if Task.isCancelled { return }
+            guard let self, self.ocrProvider.enabled else { return }
+            let ax = AccessibilityReader.read(enableEnhancedUI: self.enhancedUIEnabled)
+            self.lastOcrPokeAt = Date()
+            self.ocrProvider.onFocusedWindowChanged(
+                windowId: ax.focusedWindowId,
+                windowFrame: ax.focusedWindowFrame,
+                caretScreenRect: ax.caretRect,
+                isSecure: ax.isSecure,
+                allowedApp: AppPolicy.isAllowed(bundleId: ax.appBundleId, excluded: self.excludedBundleIds),
+                fieldText: ax.text ?? "")
         }
     }
 
@@ -211,15 +249,24 @@ final class ContextProbe {
             lastWindowId = ax.focusedWindowId
             ocrProvider.invalidate()
         }
-        if ocrProvider.enabled, windowChanged || Date().timeIntervalSince(lastOcrPokeAt) > 1.0 {
-            lastOcrPokeAt = Date()
-            ocrProvider.onFocusedWindowChanged(
-                windowId: ax.focusedWindowId,
-                windowFrame: ax.focusedWindowFrame,
-                caretScreenRect: ax.caretRect,
-                isSecure: ax.isSecure,
-                allowedApp: AppPolicy.isAllowed(bundleId: ax.appBundleId, excluded: excludedBundleIds),
-                fieldText: ax.text ?? "")
+        if ocrProvider.enabled {
+            if windowChanged {
+                // Смена окна - читаем сразу (свежий контекст нового поля).
+                lastOcrPokeAt = Date()
+                ocrRefreshTask?.cancel()
+                ocrProvider.onFocusedWindowChanged(
+                    windowId: ax.focusedWindowId,
+                    windowFrame: ax.focusedWindowFrame,
+                    caretScreenRect: ax.caretRect,
+                    isSecure: ax.isSecure,
+                    allowedApp: AppPolicy.isAllowed(bundleId: ax.appBundleId, excluded: excludedBundleIds),
+                    fieldText: ax.text ?? "")
+            } else {
+                // В ПРОЦЕССЕ набора OCR не гоняем: ScreenCaptureKit + Vision (нейродвижок) дорого
+                // на каждый тик. Перечитываем после ПАУЗЫ набора (debounce) - контекст нужен к
+                // моменту генерации подсказки, а не на каждую клавишу. Раньше пинали раз в 1с.
+                scheduleOcrRefresh()
+            }
         }
         // Префикс для буфера = тот же хвост, что увидит модель (ContextBuilder режет fieldTail до 600),
         // и тот же fallback на буфер клавиш, что и precedingText (иначе в Electron AX=nil -> буфер

@@ -61,4 +61,25 @@ public enum LayoutDecision {
     public static func shouldSwitch(asTypedIsWord: Bool, transliteratedIsWord: Bool) -> Bool {
         !asTypedIsWord && transliteratedIsWord
     }
+
+    /// Контекстно-зависимое решение (Punto-стиль). Чистая словарная эвристика выше слепа к
+    /// двум кейсам коротких слов: (A) однобуквенные; (B) латиница, которую англ. словарь
+    /// считает «словом» (vs=«versus», pf, bp) - тогда asTypedIsWord=true глушит свитч, хотя
+    /// человек писал русский предлог. Лечим контекстом: язык соседнего текста (предыдущее
+    /// слово) задаёт намерение.
+    /// - contextScript: доминирующий скрипт текста ПЕРЕД токеном (.neutral если контекста нет).
+    /// - targetScript: язык, в который конвертирует кандидат (ru -> .cyrillic, en -> .latin).
+    public static func shouldSwitch(asTypedIsWord: Bool, transliteratedIsWord: Bool,
+                                    contextScript: Script, targetScript: Script) -> Bool {
+        if contextScript != .neutral {
+            // Контекст на языке конверсии (пишем по-русски, токен вышел латиницей): доверяем
+            // контексту - конвертим, если транслит словарный. Перебивает ложный asTypedIsWord
+            // и допускает 1 букву (в/с/к/о/у...).
+            if contextScript == targetScript { return transliteratedIsWord }
+            // Контекст на ДРУГОМ языке (пишем по-английски): не трогаем (vs/pf остаются).
+            return false
+        }
+        // Контекста нет (начало строки) - прежняя словарная эвристика.
+        return !asTypedIsWord && transliteratedIsWord
+    }
 }

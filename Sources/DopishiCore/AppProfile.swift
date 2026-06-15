@@ -1,6 +1,6 @@
 import Foundation
 
-/// Категория приложения - основа матрицы профилей поведения (как у Cotypist).
+/// Категория приложения - основа матрицы профилей поведения.
 public enum AppCategory: String, Equatable, Sendable {
     case terminal     // shell - молчим (конфликт с shell-автодополнением)
     case codeEditor   // редактор кода - молчим по умолчанию (конфликт с IntelliSense/Copilot)
@@ -10,8 +10,8 @@ public enum AppCategory: String, Equatable, Sendable {
 }
 
 /// Классификация приложения по bundleId и дефолтная политика автокомплита для категории.
-/// Цель - не сыпать подсказки там, где они вредны (терминал, редактор кода), как делает
-/// Cotypist (code-editor disabled by default, terminal silent). Ручной тап раскладки идёт
+/// Цель - не сыпать подсказки там, где они вредны: редактор кода и терминал по умолчанию
+/// молчат (конфликт с IntelliSense/shell-автодополнением). Ручной тап раскладки идёт
 /// мимо этого гейта и продолжает работать везде.
 public enum AppProfile {
     public static func category(for bundleId: String?) -> AppCategory {

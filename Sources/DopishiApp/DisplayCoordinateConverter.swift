@@ -1,7 +1,7 @@
 import AppKit
 
 /// Перевод AX-координат каретки (top-left, глобальные CG) в AppKit (bottom-left).
-/// Логика Cotabby: отражаем по Y относительно ИМЕННО того экрана, на котором каретка
+/// Отражаем по Y относительно ИМЕННО того экрана, на котором каретка
 /// (per-display flip через CGDisplayBounds), иначе на нескольких мониторах подсказка уезжает.
 enum DisplayCoordinateConverter {
     private struct DisplayInfo {

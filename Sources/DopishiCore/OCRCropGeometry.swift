@@ -18,15 +18,15 @@ public struct OCRCropPlan: Equatable, Sendable {
 /// Идея (главное): захватываем НЕ тесную рамку вокруг поля, а высокую полосу, дно которой у верха
 /// каретки, и которая тянется ВВЕРХ на `bandHeightPt` в контент (переписку/документ над полем).
 /// Это и даёт OCR увидеть предыдущие сообщения/абзацы, а не только текущее поле. Верхний хром
-/// (тулбар/титул) геометрически НЕ вырезается (Cotabby тоже не вырезает) - он отсекается позже
+/// (тулбар/титул) геометрически НЕ вырезается - он отсекается позже
 /// текстом (echo-drop + sanitizeOCR). Полоса лишь не даёт уехать далеко вверх к хрому в высоком окне.
 ///
-/// Все входные прямоугольники - экранные координаты top-left (как у нас caret/window уже идут;
-/// AppKit<->CG флип НЕ нужен, в отличие от Cotabby, где rect'ы в bottom-left AppKit).
+/// Все входные прямоугольники - экранные координаты top-left (как у нас caret/window уже идут,
+/// AppKit<->CG флип НЕ нужен).
 ///
 /// ДОПУЩЕНИЕ (load-bearing): размер `windowFrame` (AX kAXSize, точки) равен размеру захвата
 /// (SCK contentRect, точки), и пиксель изображения (0,0) = верх-лево окна. Для обычных окон
-/// совпадает (Cotabby допускает то же). Может расходиться на fullscreen/tiled/смещённых окнах -
+/// совпадает. Может расходиться на fullscreen/tiled/смещённых окнах -
 /// тогда scaleX/scaleY и origin поедут. При DOPISHI_OCR_DEBUG провайдер логирует winPt vs capture,
 /// чтобы расхождение было видно. Полный фикс (брать contentRect из WindowCapture) - на будущее.
 public enum OCRCropGeometry {
@@ -62,7 +62,7 @@ public enum OCRCropGeometry {
         let proposedX = caretScreenRect.midX - targetW / 2
         let proposedY = caretScreenRect.minY - targetH
 
-        // Клемп в рамку окна (как Cotabby). targetW/H <= размеров окна, так что max..min корректен.
+        // Клемп в рамку окна. targetW/H <= размеров окна, так что max..min корректен.
         let clampedX = min(max(proposedX, windowFrame.minX), windowFrame.maxX - targetW)
         let clampedY = min(max(proposedY, windowFrame.minY), windowFrame.maxY - targetH)
 

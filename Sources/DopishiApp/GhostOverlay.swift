@@ -48,7 +48,7 @@ final class GhostOverlay {
         // центрируем строку шрифта на ЦЕНТРЕ каретки (midY), а не сажаем низ окна на низ
         // каретки. Прежняя привязка низа к caret.minY уводила ghost на строку выше (текст
         // всплывает в верх cell NSTextField). Центрирование по midY кладёт baseline на строку.
-        // lineHeight = ceil(pointSize*1.25) - та же константа, что у Cotabby.
+        // lineHeight = ceil(pointSize*1.25) - эмпирическая константа межстрочного интервала.
         let lineHeight = ceil(font.pointSize * 1.25)
         let contentH = window.frame.height
         let originY = caret.midY - contentH + lineHeight / 2

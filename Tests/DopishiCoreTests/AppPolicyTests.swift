@@ -15,6 +15,14 @@ import Testing
         #expect(AppPolicy.isAllowed(bundleId: "com.x", excluded: []))
     }
 
+    // Spotlight исключён встроенно (мгновенный поиск: инъекция оставляет артефакты, контекста
+    // для свитча нет) - не действуем там, даже если в пользовательском списке его нет.
+    @Test func spotlightBuiltInExcluded() {
+        #expect(!AppPolicy.isAllowed(bundleId: "com.apple.Spotlight", excluded: []))
+        // и для записи в память тоже заблокирован
+        #expect(!AppPolicy.allowsMemoryWrite(isSecure: false, bundleId: "com.apple.Spotlight", excluded: []))
+    }
+
     // WR-04: гейт записи в персистентную память (контракт MemoryProvider.record).
     @Test func memoryWriteBlockedForSecureField() {
         #expect(!AppPolicy.allowsMemoryWrite(isSecure: true, bundleId: "com.y", excluded: []))

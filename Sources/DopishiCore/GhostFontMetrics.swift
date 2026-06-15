@@ -1,7 +1,7 @@
 import Foundation
 import CoreGraphics
 
-/// Расчёт размера кегля ghost-подсказки по образцу Cotabby: от высоты каретки,
+/// Расчёт размера кегля ghost-подсказки от высоты каретки,
 /// откалиброванной метриками шрифта поля. ascender > 0, descender < 0 (у NSFont).
 public enum GhostFontMetrics {
     /// - caretHeight: визуальная высота каретки/строки.

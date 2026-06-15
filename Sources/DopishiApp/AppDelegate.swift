@@ -23,6 +23,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var onboardingWindow: NSWindow?
     private var monitorRunning = false
     private var lastSystemAutocorrectDisabled: Bool?
+    /// Последнее применённое к UI состояние - чтобы не перестраивать меню/иконку каждые 2с,
+    /// когда ничего не изменилось (источник всплесков CPU в простое).
+    private var lastRuntime: DiagnosticsRuntime?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -139,8 +142,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // memory.sqlite - без гейта база материализовалась бы при выключенной телеметрии.
         applyTelemetry(initialSettings.suggestionTelemetryEnabled)
         // Призрак прячем при смене активного приложения: если фокус ушёл в другое окно без
-        // нажатия клавиши, подсказка в прежнем поле осиротеет и «зависнет». Cotabby так же гасит
-        // overlay на resign-key/space-change. Закрывает случай «остался висеть призрак».
+        // нажатия клавиши, подсказка в прежнем поле осиротеет и «зависнет». Гасим overlay на
+        // resign-key/space-change. Закрывает случай «остался висеть призрак».
         NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main
         ) { [weak self] _ in
@@ -233,7 +236,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let modelPresent = ModelLocator.isPresent(fileName: settings.selectedModelFile)
         let status = AppRuntimeStatus(permissions: state, monitorRunning: monitorRunning,
                                       enabled: settings.enabled, modelPresent: modelPresent)
-        diagnostics.setRuntime(DiagnosticsRuntime(
+        let runtime = DiagnosticsRuntime(
             accessibility: state.accessibility,
             inputMonitoring: state.inputMonitoring,
             screenRecording: ScreenCapturePermission.has(),
@@ -247,7 +250,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             electron: settings.electronSupport,
             clipboard: settings.enabled && settings.clipboardContextEnabled,
             memory: settings.enabled && settings.memoryEnabled,
-            screenContext: settings.screenContextEnabled))
+            screenContext: settings.screenContextEnabled)
+        // Дедуп: ничего не изменилось -> не трогаем UI. Раньше полный rebuild меню + NSImage +
+        // публикация в диагностику шли каждые 2с вхолостую (всплески CPU в простое). Дешёвые
+        // опросы (права/модель) выше остаются - они нужны, чтобы ЗАМЕТИТЬ изменение.
+        guard runtime != lastRuntime else { return }
+        lastRuntime = runtime
+        diagnostics.setRuntime(runtime)
         if let button = statusItem.button {
             button.image = NSImage(systemSymbolName: StatusPresentation.symbolName(for: state),
                                    accessibilityDescription: "Допиши")

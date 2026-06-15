@@ -197,7 +197,7 @@ enum AccessibilityReader {
     private nonisolated(unsafe) static var lastElementKey: AXElementKey?
 
     /// Будим ленивое accessibility-дерево Electron/Chromium (тогда отдаёт текст/каретку).
-    /// Способ Cotabby: AXManualAccessibility на app-элементе (по pid) - без побочки на оконные
+    /// AXManualAccessibility на app-элементе (по pid) - без побочки на оконные
     /// менеджеры (в отличие от AXEnhancedUserInterface). При отсутствии атрибута - запасной Enhanced.
     private static func enableManualAccessibility(pid: pid_t) {
         guard !manualAXPids.contains(pid), !unsupportedAXPids.contains(pid) else { return }
@@ -277,7 +277,7 @@ enum AccessibilityReader {
         let attrs = attr.attributes(at: 0, effectiveRange: nil)
         // Шрифт приходит либо готовым NSFont (.font), либо AX-словарём "AXFont"
         // (AXFontName/AXFontSize). Нативные NSTextView (TextEdit/Mail/Notes) дают именно словарь,
-        // а не .font - поэтому раньше шрифт не подтягивался и кегль уезжал в fallback. Рецепт Cotabby.
+        // а не .font - поэтому раньше шрифт не подтягивался и кегль уезжал в fallback.
         if let f = attrs[.font] as? NSFont {
             return f
         }
@@ -305,7 +305,8 @@ enum AccessibilityReader {
     }
 
     /// Позиция каретки через приватный AXTextMarker (работает в Chromium/Electron,
-    /// где kAXBoundsForRangeParameterized битый). Рецепт Cotabby.
+    /// где kAXBoundsForRangeParameterized битый). AXTextMarker - documented-but-undocumented
+    /// macOS AX API, доступный любому процессу.
     private static func textMarkerCaretRect(_ element: AXUIElement) -> CGRect? {
         var markerRange: CFTypeRef?
         guard AXUIElementCopyAttributeValue(
@@ -322,7 +323,7 @@ enum AccessibilityReader {
         return rect
     }
 
-    /// Branch 2 (Cotabby): позиция каретки по ПРАВОМУ краю символа перед ней.
+    /// Branch 2: позиция каретки по ПРАВОМУ краю символа перед ней.
     /// Помогает в полях, которые не дают bounds нулевого диапазона, но дают bounds символа.
     private static func prevCharCaretRect(_ element: AXUIElement, location: Int) -> CGRect? {
         guard location > 0 else { return nil }

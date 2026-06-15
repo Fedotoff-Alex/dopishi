@@ -48,7 +48,7 @@ public enum ModelCatalog {
         ModelPreset(displayName: "Qwen3.5 9B", tier: "качественная",
                     repo: "lmstudio-community/Qwen3.5-9B-GGUF",
                     fileName: "Qwen3.5-9B-Q4_K_M.gguf", approxSizeGB: 5.5),
-        ModelPreset(displayName: "Gemma 4 E2B", tier: "как у Cotypist",
+        ModelPreset(displayName: "Gemma 4 E2B", tier: "компактная",
                     repo: "mradermacher/gemma-4-E2B-i1-GGUF",
                     fileName: "gemma-4-E2B-i1-Q4_K_M.gguf",
                     remoteFileName: "gemma-4-E2B.i1-Q4_K_M.gguf", approxSizeGB: 3.5,

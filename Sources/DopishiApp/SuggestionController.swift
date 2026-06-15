@@ -249,7 +249,7 @@ final class SuggestionController {
                 break   // в invalidated-путь: debounce -> requestSuggestion покажет fix
             }
             // Набрано начало подсказки - сдвигаем ghost без перегенерации
-            // (как Cotypist: "угадывает уже через 1-2 буквы", без моргания).
+            // (угадываем уже через 1-2 буквы, без моргания).
             latest = ctx
             invalidateStream()
             debounceTask?.cancel(); debounceTask = nil

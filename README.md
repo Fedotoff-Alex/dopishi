@@ -5,7 +5,7 @@ gray "ghost" suggestions at the caret in almost any app and completes your text 
 press Tab - similar in spirit to Cotypist and Cotabby, but built from scratch as a learning
 and open-source project. Everything runs on-device; nothing is sent to the network.
 
-> Status: experimental / personal project (v0.9.0 beta). It builds, is covered by ~470 tests,
+> Status: experimental / personal project (v0.9.1 beta). It builds, is covered by ~470 tests,
 > and works day to day, but it is not a polished release yet (see Limitations). Use at your own risk.
 
 ## What it does
@@ -105,6 +105,9 @@ own terms). You are responsible for complying with the license of any model you 
   mid-word completion may occasionally be spaced or skipped; native apps are unaffected.
 - Prompt-injection from context channels is reduced (symbol stripping, secret dropping), not
   fully solved. Context is treated as untrusted hints.
+- Dopishi does not act in Spotlight / system search: its instant-search field re-renders the
+  text faster than synthetic edits can land, so layout conversion there is unreliable - the
+  field is excluded by design.
 
 ## Credits
 
