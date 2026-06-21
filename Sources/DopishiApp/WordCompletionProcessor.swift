@@ -36,7 +36,15 @@ final class WordCompletionProcessor {
         let ctxScript = Self.contextScript(of: text)
 
         if layoutEnabled {
-            // Сначала целый спейс-токен: слова с б/ю в EN-раскладке ("будет"=",eltn",
+            // Число с разделителями ю/б ("2ю1" -> "2.1", набрано в RU-раскладке): однозначно
+            // mis-layout, конвертим безусловно (мимо словарных гейтов). Раскладку НЕ переключаем -
+            // цифры/пунктуация одинаковы в обеих, сюрприз-свитч не нужен.
+            if let fixedNum = KeyboardLayout.fixNumericSeparators(word) {
+                Self.layoutLog("num: '\(word)' -> '\(fixedNum)'")
+                replace(word: word, boundary: bnd, deleting: word.count + bnd.count, with: fixedNum)
+                return true
+            }
+            // Целый спейс-токен: слова с б/ю в EN-раскладке ("будет"=",eltn",
             // "любой"="k.,jq") содержат , и . - lastWord рвёт их на границах, и простой
             // путь такое слово не видит вовсе (репорт: "запятые и точки остаются").
             if tryTokenLayout(text: text, boundary: bnd) { return true }
@@ -138,10 +146,11 @@ final class WordCompletionProcessor {
         return true
     }
 
-    /// Граничный символ конвертируется вместе со словом: "/"->"." и "?"->"," при свитче
-    /// в ru - иначе "ghbdtn/" давал "привет/" (точка оставалась слэшем). Пробел не в карте.
+    /// Граничный символ при свитче. Делегируем в KeyboardLayout.boundaryForSwitch: "/"->"."
+    /// и "?"->"," (позиции пунктуации ЙЦУКЕН), а реальные "," и "." оставляем пунктуацией
+    /// (раньше enToRussian мапил их в буквы "б"/"ю" -> "приветб"/"приветю").
     private func convertBoundary(_ b: String, to lang: String) -> String {
-        lang == "ru" ? KeyboardLayout.enToRussian(b) : KeyboardLayout.ruToEnglish(b)
+        KeyboardLayout.boundaryForSwitch(b, to: lang)
     }
 
     /// ВАЖНО: deleteCount трактуется как число Backspace (1 графема = 1 Backspace).

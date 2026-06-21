@@ -102,6 +102,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         probe.setMemoryEnabled(initialSettings.enabled && initialSettings.memoryEnabled)
         probe.memoryProvider.ttlDays = initialSettings.memoryTTLDays
         probe.memoryProvider.learningExcluded = Set(initialSettings.memoryExcludedBundleIds)
+        // MEM-06 D-06 (замыкает Plan 03): проводим DiagnosticsCenter в MemoryProvider, чтобы
+        // secret-дроп на App-входе записи памяти инкрементировал счётчик secretDropped (только
+        // число, сырой текст к метрике не доходит). setDiagnostics объявлен в MemoryProvider (Plan 03).
+        probe.memoryProvider.setDiagnostics(diagnostics)
         settingsVM.onClearMemory = { [weak self] in
             self?.probe?.memoryProvider.clear()
             self?.adaptivePolicy.invalidate()   // статистика стёрта - кэш политики тоже
@@ -199,7 +203,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 try data.write(to: url)
             } catch {
                 let alert = NSAlert()
-                alert.messageText = "Не удалось экспортировать память"
+                alert.messageText = L.tr("memory.export.error.title")
                 alert.informativeText = error.localizedDescription
                 alert.runModal()
             }
@@ -266,40 +270,45 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func rebuildMenu(state: PermissionState, status: AppRuntimeStatus) {
         let menu = NSMenu()
-        menu.addItem(NSMenuItem(title: RuntimeStatusPresentation.menuTitle(for: status), action: nil, keyEquivalent: ""))
+        // Core отдаёт стабильный id статуса (D-11); при недостающих правах достраиваем список.
+        let statusId = RuntimeStatusPresentation.menuTitle(for: status)
+        let statusTitle = statusId == "status.needPermissions"
+            ? L.tr(statusId, status.permissions.missingPermissions.joined(separator: ", "))
+            : L.tr(statusId)
+        menu.addItem(NSMenuItem(title: statusTitle, action: nil, keyEquivalent: ""))
         menu.addItem(.separator())
         if RuntimeStatusPresentation.needsModelDownload(status) {
-            menu.addItem(NSMenuItem(title: "Скачать модель…", action: #selector(openSettings), keyEquivalent: ""))
+            menu.addItem(NSMenuItem(title: L.tr("menu.downloadModel"), action: #selector(openSettings), keyEquivalent: ""))
             menu.addItem(.separator())
         }
 
         if !state.accessibility {
-            let item = NSMenuItem(title: "Выдать Accessibility…", action: #selector(grantAccessibility), keyEquivalent: "")
+            let item = NSMenuItem(title: L.tr("menu.grantAccessibility"), action: #selector(grantAccessibility), keyEquivalent: "")
             menu.addItem(item)
         }
         if !state.inputMonitoring {
-            let item = NSMenuItem(title: "Выдать Input Monitoring…", action: #selector(grantInputMonitoring), keyEquivalent: "")
+            let item = NSMenuItem(title: L.tr("menu.grantInputMonitoring"), action: #selector(grantInputMonitoring), keyEquivalent: "")
             menu.addItem(item)
         }
         if !state.allGranted {
             menu.addItem(.separator())
         }
 
-        let diagItem = NSMenuItem(title: "Диагностика…", action: #selector(openDiagnostics), keyEquivalent: "d")
+        let diagItem = NSMenuItem(title: L.tr("menu.diagnostics"), action: #selector(openDiagnostics), keyEquivalent: "d")
         menu.addItem(diagItem)
-        let hudItem = NSMenuItem(title: "Показать/скрыть debug-HUD", action: #selector(toggleHUD), keyEquivalent: "")
+        let hudItem = NSMenuItem(title: L.tr("menu.toggleHud"), action: #selector(toggleHUD), keyEquivalent: "")
         menu.addItem(hudItem)
         menu.addItem(.separator())
 
-        let settingsItem = NSMenuItem(title: "Настройки…", action: #selector(openSettings), keyEquivalent: ",")
+        let settingsItem = NSMenuItem(title: L.tr("menu.settings"), action: #selector(openSettings), keyEquivalent: ",")
         menu.addItem(settingsItem)
-        let privacyItem = NSMenuItem(title: "Приватность…", action: #selector(openPrivacyCenter), keyEquivalent: "")
+        let privacyItem = NSMenuItem(title: L.tr("menu.privacy"), action: #selector(openPrivacyCenter), keyEquivalent: "")
         menu.addItem(privacyItem)
-        let onboardingItem = NSMenuItem(title: "Мастер настройки…", action: #selector(openOnboardingFromMenu), keyEquivalent: "")
+        let onboardingItem = NSMenuItem(title: L.tr("menu.setupWizard"), action: #selector(openOnboardingFromMenu), keyEquivalent: "")
         menu.addItem(onboardingItem)
         menu.addItem(.separator())
 
-        menu.addItem(NSMenuItem(title: "Выход", action: #selector(quit), keyEquivalent: "q"))
+        menu.addItem(NSMenuItem(title: L.tr("menu.quit"), action: #selector(quit), keyEquivalent: "q"))
 
         for item in menu.items where item.action != nil { item.target = self }
         statusItem.menu = menu
@@ -343,7 +352,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if settingsWindow == nil {
             let hosting = NSHostingController(rootView: SettingsView(vm: settingsVM))
             let win = NSWindow(contentViewController: hosting)
-            win.title = "Допиши - настройки"
+            win.title = L.tr("window.settings")
             win.styleMask = [.titled, .closable]
             win.isReleasedWhenClosed = false
             settingsWindow = win
@@ -357,7 +366,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if privacyWindow == nil {
             let hosting = NSHostingController(rootView: PrivacyCenterView(vm: settingsVM))
             let win = NSWindow(contentViewController: hosting)
-            win.title = "Допиши - приватность"
+            win.title = L.tr("window.privacy")
             win.styleMask = [.titled, .closable]
             win.isReleasedWhenClosed = false
             privacyWindow = win
@@ -391,7 +400,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
             let hosting = NSHostingController(rootView: OnboardingView(vm: vm))
             let win = NSWindow(contentViewController: hosting)
-            win.title = "Добро пожаловать в Допиши"
+            win.title = L.tr("window.onboarding")
             win.styleMask = [.titled, .closable]
             win.isReleasedWhenClosed = false
             onboardingWindow = win
@@ -405,7 +414,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if diagnosticsWindow == nil {
             let hosting = NSHostingController(rootView: DiagnosticsView(center: diagnostics))
             let win = NSWindow(contentViewController: hosting)
-            win.title = "Допиши - диагностика"
+            win.title = L.tr("window.diagnostics")
             win.styleMask = [.titled, .closable]
             win.isReleasedWhenClosed = false
             diagnosticsWindow = win

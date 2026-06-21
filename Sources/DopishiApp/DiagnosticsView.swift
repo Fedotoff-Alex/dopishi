@@ -10,92 +10,105 @@ struct DiagnosticsView: View {
 
     var body: some View {
         Form {
-            Section("Готовность") {
+            Section(L.tr("diagnostics.section.readiness")) {
+                // Имена системных разрешений - технические, не переводятся (совпадают с macOS).
                 boolRow("Accessibility", r.accessibility)
                 boolRow("Input Monitoring", r.inputMonitoring)
-                boolRow("Запись экрана (для OCR)", r.screenRecording)
-                boolRow("Монитор ввода запущен", r.monitorRunning)
-                boolRow("Включено мастер-тумблером", r.masterEnabled)
-                row("Модель", r.modelPresent ? r.modelFile : "не скачана (\(r.modelFile))")
+                boolRow(L.tr("diagnostics.screenRecording"), r.screenRecording)
+                boolRow(L.tr("diagnostics.monitorRunning"), r.monitorRunning)
+                boolRow(L.tr("diagnostics.masterEnabled"), r.masterEnabled)
+                row(L.tr("diagnostics.model"), r.modelPresent ? r.modelFile : L.tr("diagnostics.model.notDownloaded", r.modelFile))
             }
 
-            Section("Фичи") {
-                boolRow("Автодополнение / контекст", r.masterEnabled)
-                boolRow("Переключение раскладки (авто)", r.layout)
-                boolRow("Ручной свитч (тап Option)", r.manualLayout)
-                boolRow("Исправление написания", r.autocorrect)
-                boolRow("Поддержка Electron", r.electron)
-                boolRow("Контекст: OCR экрана", r.screenContext)
-                boolRow("Контекст: буфер обмена", r.clipboard)
-                boolRow("Контекст: память окна", r.memory)
+            Section(L.tr("diagnostics.section.features")) {
+                boolRow(L.tr("diagnostics.features.autocompleteContext"), r.masterEnabled)
+                boolRow(L.tr("diagnostics.features.layoutAuto"), r.layout)
+                boolRow(L.tr("diagnostics.features.manualLayout"), r.manualLayout)
+                boolRow(L.tr("diagnostics.features.autocorrect"), r.autocorrect)
+                boolRow(L.tr("diagnostics.features.electron"), r.electron)
+                boolRow(L.tr("diagnostics.features.contextOcr"), r.screenContext)
+                boolRow(L.tr("diagnostics.features.contextClipboard"), r.clipboard)
+                boolRow(L.tr("diagnostics.features.contextMemory"), r.memory)
             }
 
-            Section("Текущее поле") {
-                row("Приложение", c.app)
-                row("Профиль", c.profile)
-                row("Tier", c.secure ? "\(c.tier)  [SECURE]" : c.tier)
-                row("Каретка", c.caret, mono: true)
+            Section(L.tr("diagnostics.section.field")) {
+                row(L.tr("diagnostics.field.app"), c.app)
+                // c.profile - стабильный id из DiagnosticsCenter (D-11), локализуем здесь.
+                row(L.tr("diagnostics.field.profile"), L.tr(c.profile))
+                row(L.tr("diagnostics.field.tier"), c.secure ? L.tr("diagnostics.field.tierSecure", c.tier) : c.tier)
+                row(L.tr("diagnostics.field.caret"), c.caret, mono: true)
             }
 
             Section {
-                row("OCR", channel(enabled: r.screenContext, preview: c.ocrPreview), mono: true)
-                row("Буфер", channel(enabled: r.clipboard, preview: c.clipboardPreview), mono: true)
-                row("Память", channel(enabled: r.memory, preview: c.memoryPreview), mono: true)
+                row(L.tr("diagnostics.channels.ocr"), channel(enabled: r.screenContext, preview: c.ocrPreview), mono: true)
+                row(L.tr("diagnostics.channels.clipboard"), channel(enabled: r.clipboard, preview: c.clipboardPreview), mono: true)
+                row(L.tr("diagnostics.channels.memory"), channel(enabled: r.memory, preview: c.memoryPreview), mono: true)
             } header: {
-                Text("Каналы контекста (что видит модель)")
+                Text(L.tr("diagnostics.channels.header"))
             } footer: {
-                Text("«выкл» - фича отключена; «нет данных» - фича включена, но для текущего поля канал пуст (нет окружения / буфер нерелевантен / память пуста).")
+                Text(L.tr("diagnostics.channels.footer"))
                     .font(.caption).foregroundStyle(.secondary)
             }
 
             Section {
-                row("Последний исход", center.lastOutcome)
-                row("Обновлено", center.updatedAt.map(Self.time) ?? "-")
+                row(L.tr("diagnostics.suggestion.lastOutcome"), center.lastOutcome)
+                row(L.tr("diagnostics.suggestion.updated"), center.updatedAt.map(Self.time) ?? "-")
             } header: {
-                Text("Подсказка")
+                Text(L.tr("diagnostics.suggestion.header"))
             } footer: {
-                Text("Что произошло с последним запросом подсказки в текущем поле. Если подсказок нет - здесь причина (например, «нет позиции каретки» или «слишком мало набрано»).")
+                Text(L.tr("diagnostics.suggestion.footer"))
                     .font(.caption).foregroundStyle(.secondary)
             }
 
             Section {
-                row("p50 (до первого токена)", latencyMs(center.latencyMetrics.p50FirstMs))
-                row("p95 (до первого токена)", latencyMs(center.latencyMetrics.p95FirstMs))
-                row("p50 (весь стрим)", latencyMs(center.latencyMetrics.p50TotalMs))
-                row("p95 (весь стрим)", latencyMs(center.latencyMetrics.p95TotalMs))
+                row(L.tr("diagnostics.latency.p50First"), latencyMs(center.latencyMetrics.p50FirstMs))
+                row(L.tr("diagnostics.latency.p95First"), latencyMs(center.latencyMetrics.p95FirstMs))
+                row(L.tr("diagnostics.latency.p50Total"), latencyMs(center.latencyMetrics.p50TotalMs))
+                row(L.tr("diagnostics.latency.p95Total"), latencyMs(center.latencyMetrics.p95TotalMs))
             } header: {
-                Text("Latency (последние 7 дней)")
+                Text(L.tr("diagnostics.latency.header"))
             } footer: {
-                Text("Время от запроса до первого токена / до конца стрима. Только показанные подсказки (принятие не даёт отдельного замера).")
+                Text(L.tr("diagnostics.latency.footer"))
                     .font(.caption).foregroundStyle(.secondary)
             }
 
             Section {
-                row("p50 (read)", latencyMs(center.latencyMetrics.p50AXReadMs))
-                row("p95 (read)", latencyMs(center.latencyMetrics.p95AXReadMs))
+                row(L.tr("diagnostics.axRead.p50"), latencyMs(center.latencyMetrics.p50AXReadMs))
+                row(L.tr("diagnostics.axRead.p95"), latencyMs(center.latencyMetrics.p95AXReadMs))
             } header: {
-                Text("AX read (горячий путь)")
+                Text(L.tr("diagnostics.axRead.header"))
             } footer: {
-                Text("Время одного AccessibilityReader.read() на нажатие. Базлайн до оптимизации range-чтения - для сравнения p50/p95.")
+                Text(L.tr("diagnostics.axRead.footer"))
                     .font(.caption).foregroundStyle(.secondary)
             }
 
             Section {
                 if center.refusalCounts.isEmpty {
-                    row("Причины отказа", "нет данных")
+                    row(L.tr("diagnostics.refusals.label"), L.tr("diagnostics.refusals.noData"))
                 } else {
+                    // reason - технический ключ метрики (policy-отказ), не user-facing строка.
                     ForEach(center.refusalCounts.sorted { $0.value > $1.value }, id: \.key) { reason, count in
                         row(reason, "\(count)")
                     }
                 }
             } header: {
-                Text("Почему подсказка не показалась (7 дней)")
+                Text(L.tr("diagnostics.refusals.header"))
             } footer: {
                 // Запись policy-отказов авто-пути (secure-поле, исключённое приложение, мало
                 // набрано) - на каждое нажатие клавиши, hot-path. Сознательно не пишем их в
                 // suggestion_event (решение аудита фазы 1, полный учёт - в Phase 6); живую
                 // причину показывает строка «Последний исход» выше.
-                Text("Только отказы по явному запросу подсказки: нет позиции каретки, пустое поле, устаревший контекст. Отказы автоподсказки (secure-поле, исключённое приложение, мало набрано) сюда не пишутся - текущую причину видно в строке «Последний исход».")
+                Text(L.tr("diagnostics.refusals.footer"))
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+
+            Section {
+                // MEM-06 D-06: счётчик secret-drop (только число, сырой текст к метрике не доходит).
+                row(L.tr("diagnostics.secretDropped.label"), L.tr("diagnostics.secretDropped.count", center.secretDropped))
+            } header: {
+                Text(L.tr("diagnostics.secretDropped.header"))
+            } footer: {
+                Text(L.tr("diagnostics.secretDropped.footer"))
                     .font(.caption).foregroundStyle(.secondary)
             }
         }
@@ -108,7 +121,7 @@ struct DiagnosticsView: View {
 
     // MARK: - Строки
 
-    private func latencyMs(_ ms: Int) -> String { ms == 0 ? "-" : "\(ms) мс" }
+    private func latencyMs(_ ms: Int) -> String { ms == 0 ? "-" : L.tr("diagnostics.ms", ms) }
 
     private func row(_ label: String, _ value: String, mono: Bool = false) -> some View {
         HStack(alignment: .top) {
@@ -128,13 +141,13 @@ struct DiagnosticsView: View {
             Spacer(minLength: 16)
             Image(systemName: on ? "checkmark.circle.fill" : "xmark.circle.fill")
                 .foregroundStyle(on ? .green : .secondary)
-            Text(on ? "да" : "нет").foregroundStyle(.secondary)
+            Text(on ? L.tr("diagnostics.bool.yes") : L.tr("diagnostics.bool.no")).foregroundStyle(.secondary)
         }
     }
 
     private func channel(enabled: Bool, preview: String?) -> String {
-        guard enabled else { return "выкл" }
-        return preview ?? "нет данных"
+        guard enabled else { return L.tr("diagnostics.channels.off") }
+        return preview ?? L.tr("diagnostics.channels.noData")
     }
 
     private static let timeFormatter: DateFormatter = {

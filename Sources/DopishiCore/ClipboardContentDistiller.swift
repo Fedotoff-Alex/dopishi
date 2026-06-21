@@ -33,25 +33,8 @@ public enum ClipboardContentDistiller {
     }
 
     /// Похоже ли содержимое на секрет (ключ/токен/пароль) - тогда НЕ подмешиваем в промпт.
-    /// Сделано для приватности (буфер обмена - частый транзит секретов).
-    /// Эвристики подобраны под низкий false-positive: префиксы по ГРАНИЦЕ токена (не подстрокой),
-    /// и длинный одиночный токен букв+цифр без URL/путь/email/версия-пунктуации.
-    public static func looksSecret(_ text: String) -> Bool {
-        let prefixes = ["sk-", "ghp_", "gho_", "ghu_", "ghs_", "github_pat_",
-                        "xoxb-", "xoxp-", "xoxa-", "xoxr-", "akia", "eyj"]
-        for token in text.split(whereSeparator: { $0.isWhitespace }) {
-            let lower = token.lowercased()
-            if prefixes.contains(where: { lower.hasPrefix($0) }) { return true }
-            if token.count >= 20 {
-                let hasLetter = token.contains { $0.isLetter }
-                let hasDigit = token.contains { $0.isNumber }
-                let hasUrlPunct = token.contains { $0 == "." || $0 == "/" || $0 == "@" || $0 == ":" }
-                if hasLetter, hasDigit, !hasUrlPunct { return true }
-            }
-        }
-        if text.contains("-----BEGIN") { return true }   // PEM-ключи (многострочно)
-        return false
-    }
+    /// Делегирует общему слою SecretGuard (D-01): эвристики живут в одном месте, без дублирования.
+    public static func looksSecret(_ t: String) -> Bool { SecretGuard.looksSecret(t) }
 
     /// Дистилляция по строкам. Короткий (<=3 строк) или пустой префикс -> буфер как есть.
     public static func distill(clipboard: String, prefixText: String) -> String {

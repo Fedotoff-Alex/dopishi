@@ -1,0 +1,1314 @@
+{
+  "sourceLanguage" : "en",
+  "version" : "1.0",
+  "strings" : {
+    "model.tier.fast" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "fast" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "быстрая" } }
+      }
+    },
+    "model.tier.balanced" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "balanced" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "сбалансированная" } }
+      }
+    },
+    "model.tier.quality" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "high quality" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "качественная" } }
+      }
+    },
+    "model.tier.compact" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "compact" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "компактная" } }
+      }
+    },
+    "model.tier.bestRu" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "best Russian" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "лучшее RU" } }
+      }
+    },
+    "model.tier.strongRu" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "strong Russian" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "сильное RU" } }
+      }
+    },
+    "model.tier.qualityRuApache" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "quality Russian, Apache" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "качественная русская, Apache" } }
+      }
+    },
+    "model.tier.qualityRu" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "quality Russian" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "качественная русская" } }
+      }
+    },
+    "selection.action.fix" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Fix mistakes" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Исправить ошибки" } }
+      }
+    },
+    "selection.action.rewrite" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Rewrite" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Переписать" } }
+      }
+    },
+    "selection.action.shorten" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Shorten" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Сократить" } }
+      }
+    },
+    "selection.action.expand" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Expand" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Расширить" } }
+      }
+    },
+    "selection.action.translate" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Translate" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Перевести" } }
+      }
+    },
+    "selection.action.toneFormal" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Tone: formal" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Тон: деловой" } }
+      }
+    },
+    "selection.action.toneFriendly" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Tone: friendly" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Тон: дружелюбный" } }
+      }
+    },
+    "selection.hud.hint" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Tab - replace · Esc - cancel" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Tab - заменить · Esc - отмена" } }
+      }
+    },
+    "selection.hud.generating" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Generating (%@)…" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Генерирую (%@)…" } }
+      }
+    },
+    "selection.hud.failed" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "No luck - try again" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Не получилось - попробуй ещё раз" } }
+      }
+    },
+    "selection.hud.selectionChanged" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Selection changed - replacement cancelled" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Выделение изменилось - замена отменена" } }
+      }
+    },
+    "status.active" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Dopishi: active" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Допиши: активно" } }
+      }
+    },
+    "status.monitorStopped" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Dopishi: monitor not running - restart" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Допиши: монитор не запущен - перезапустите" } }
+      }
+    },
+    "status.noModel" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Dopishi: model not downloaded" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Допиши: модель не скачана" } }
+      }
+    },
+    "status.disabled" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Dopishi: disabled" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Допиши: выключено" } }
+      }
+    },
+    "status.needPermissions" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Dopishi: permissions needed (%@)" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Допиши: нужны разрешения (%@)" } }
+      }
+    },
+    "settings.system.header" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "System" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Система" } }
+      }
+    },
+    "settings.launchAtLogin" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Launch at login" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Запускать при входе в систему" } }
+      }
+    },
+    "settings.electronSupport" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Electron app support" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Поддержка Electron-приложений" } }
+      }
+    },
+    "settings.system.footer" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Electron support enables text reading in Claude, VS Code and similar apps (fixes and layout). It may affect window managers (Magnet, Rectangle) - enable when needed." } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Поддержка Electron включает чтение текста в Claude, VS Code и подобных (исправления и раскладка). Может влиять на оконные менеджеры (Magnet, Rectangle) - включайте при необходимости." } }
+      }
+    },
+    "settings.context.header" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Context" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Контекст" } }
+      }
+    },
+    "settings.context.ocr" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Screen context (OCR)" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Контекст экрана (OCR)" } }
+      }
+    },
+    "settings.context.openScreenRecording" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Open screen recording settings…" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Открыть настройки записи экрана…" } }
+      }
+    },
+    "settings.context.clipboard" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Clipboard context" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Контекст буфера обмена" } }
+      }
+    },
+    "settings.context.memory" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Memory (remember what was written in the window)" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Память (помнить написанное в окне)" } }
+      }
+    },
+    "settings.context.clearMemory" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Clear memory…" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Очистить память…" } }
+      }
+    },
+    "settings.context.footer" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Suggestions take into account the text around the field (email subject, recipient, title), recently copied text and the history of what you wrote in this window. Everything is local (SQLite on your Mac), nothing goes to the network. OCR requires Screen Recording. The clipboard is mixed in only if it is fresh (<5 min) and overlaps with what you are typing. Memory is kept for 7 days (configurable in Privacy), secrets are not recorded. Nothing works in secure fields and excluded apps." } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Подсказки учитывают текст вокруг поля (тема письма, собеседник, заголовок), недавно скопированный текст и историю того, что вы писали в этом окне. Всё локально (SQLite на вашем Mac), ничего не уходит в сеть. OCR требует «Запись экрана». Буфер подмешивается только если свежий (<5 мин) и пересекается с тем, что вы печатаете. Память хранится 7 дней (настраивается в «Приватность…»), секреты не записываются. Ничего не работает в secure-полях и исключённых приложениях." } }
+      }
+    },
+    "settings.suggestions.header" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Suggestions" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Подсказки" } }
+      }
+    },
+    "settings.suggestions.show" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Show suggestions" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Показывать подсказки" } }
+      }
+    },
+    "settings.suggestions.debounce" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Delay: %lld ms" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Задержка: %lld мс" } }
+      }
+    },
+    "settings.suggestions.minChars" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Minimum characters: %lld" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Минимум символов: %lld" } }
+      }
+    },
+    "settings.suggestions.maxWords" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Completion length: up to %lld words" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Длина дополнения: до %lld слов" } }
+      }
+    },
+    "settings.model.header" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Model" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Модель" } }
+      }
+    },
+    "settings.model.cancel" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Cancel" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Отмена" } }
+      }
+    },
+    "settings.model.cancelHelp" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Interrupt the download - it will resume from the same place" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Прервать загрузку - продолжится с того же места" } }
+      }
+    },
+    "settings.model.inUse" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "in use" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "используется" } }
+      }
+    },
+    "settings.model.speed" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Speed" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Скорость" } }
+      }
+    },
+    "settings.model.speedHelp" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Benchmark: this model's generation speed on your Mac" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Бенчмарк: скорость генерации этой модели на вашем Mac" } }
+      }
+    },
+    "settings.model.select" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Select" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Выбрать" } }
+      }
+    },
+    "settings.model.download" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Download" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Скачать" } }
+      }
+    },
+    "settings.model.deleteHelp" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Delete the model from disk" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Удалить модель с диска" } }
+      }
+    },
+    "settings.model.footer" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "%@ The download is verified by checksum (sha256); an interrupted one resumes from the place of cancellation." } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "%@ Загрузка проверяется по контрольной сумме (sha256); прерванная - продолжается с места отмены." } }
+      }
+    },
+    "settings.corrections.header" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Corrections" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Исправления" } }
+      }
+    },
+    "settings.corrections.manualLayout" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Switch layout on Option tap" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Переключать раскладку по тапу Option" } }
+      }
+    },
+    "settings.corrections.autoLayout" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Automatic layout switching" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Автопереключение раскладки" } }
+      }
+    },
+    "settings.corrections.autocorrect" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Suggest typo fixes (in green, Tab)" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Предлагать исправление опечаток (зелёным, Tab)" } }
+      }
+    },
+    "settings.corrections.disableSystem" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Suppress macOS system autocorrect" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Гасить системное автоисправление macOS" } }
+      }
+    },
+    "settings.corrections.footer" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "A typo is not replaced by itself - a fix is offered as a green ghost, Tab replaces the word. The macOS system autocorrect can be suppressed so it does not conflict (applied after restarting the app)." } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Опечатка не заменяется сама - предлагается исправление зелёным призраком, Tab заменяет слово. Системное автоисправление macOS можно погасить, чтобы оно не конфликтовало (применяется после перезапуска приложения)." } }
+      }
+    },
+    "settings.dictionary.header" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Personal dictionary" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Личный словарь" } }
+      }
+    },
+    "settings.dictionary.addPlaceholder" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Add a word…" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Добавить слово…" } }
+      }
+    },
+    "settings.dictionary.add" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Add" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Добавить" } }
+      }
+    },
+    "settings.dictionary.footer" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Words here are not treated as typos and are not offered for correction - names, projects, terms, slang (like the PuntoSwitcher ignore list)." } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Слова отсюда не считаются опечаткой и не предлагаются к исправлению - имена, проекты, термины, сленг (как игнор-словарь PuntoSwitcher)." } }
+      }
+    },
+    "settings.style.header" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Style guidelines" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Указания по стилю" } }
+      }
+    },
+    "settings.style.placeholder" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "E.g.: write briefly and in a business tone, no fluff" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Напр.: пиши кратко и по-деловому, без воды" } }
+      }
+    },
+    "settings.style.footer" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Mixed into the beginning of the prompt, they affect the style/tone of completions. Empty - no guidelines." } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Подмешиваются в начало промпта, влияют на стиль/тон продолжений. Пусто - без указаний." } }
+      }
+    },
+    "settings.snippets.header" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Snippets" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Сниппеты" } }
+      }
+    },
+    "settings.snippets.placeholder" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "sig: Best regards, Alex\naddr: 27c1 Pavlovskaya St." } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "sig: С уважением, Алекс\naddr: Павловская 27с1" } }
+      }
+    },
+    "settings.snippets.footer" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "One line = \"name: text\". Type :name and press Tab - the text is inserted. Built-in: :date (date) and :time (time)." } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Одна строка = «имя: текст». Набери :имя и нажми Tab - текст вставится. Встроенные: :date (дата) и :time (время)." } }
+      }
+    },
+    "settings.exclusions.header" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Do not work in apps" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Не работать в приложениях" } }
+      }
+    },
+    "settings.exclusions.addApp" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Add an app…" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Добавить приложение…" } }
+      }
+    },
+    "settings.exclusions.footer" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Dopishi works in all apps. Here is where to fully disable it (suggestions, automatic and manual switching)." } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Dopishi работает во всех приложениях. Здесь - где полностью выключить (подсказки, авто- и ручное переключение)." } }
+      }
+    },
+    "settings.models.count" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : { "stringUnit" : { "state" : "translated", "value" : "%lld model" } },
+              "other" : { "stringUnit" : { "state" : "translated", "value" : "%lld models" } }
+            }
+          }
+        },
+        "ru" : {
+          "variations" : {
+            "plural" : {
+              "one" : { "stringUnit" : { "state" : "translated", "value" : "%lld модель" } },
+              "few" : { "stringUnit" : { "state" : "translated", "value" : "%lld модели" } },
+              "many" : { "stringUnit" : { "state" : "translated", "value" : "%lld моделей" } },
+              "other" : { "stringUnit" : { "state" : "translated", "value" : "%lld модели" } }
+            }
+          }
+        }
+      }
+    },
+    "settings.model.size" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "%.1f GB" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "%.1f ГБ" } }
+      }
+    },
+    "settings.model.sizeOnDisk" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "%.1f GB on disk" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "%.1f ГБ на диске" } }
+      }
+    },
+    "settings.model.heavyForRam" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : " · heavy for RAM" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : " · тяжело для ОЗУ" } }
+      }
+    },
+    "settings.model.recommended.ru" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : " · recommended for Russian" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : " · рекомендуется для русского" } }
+      }
+    },
+    "settings.model.recommended.en" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : " · recommended for English" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : " · рекомендуется для English" } }
+      }
+    },
+    "settings.model.totalOnDisk" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Total on disk: %.1f GB" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Всего на диске: %.1f ГБ" } }
+      }
+    },
+    "settings.dbSize.kb" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "%.0f KB" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "%.0f КБ" } }
+      }
+    },
+    "settings.dbSize.mb" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "%.1f MB" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "%.1f МБ" } }
+      }
+    },
+    "settings.dbSize.none" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "database not created" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "база не создана" } }
+      }
+    },
+    "settings.status.deleted" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Deleted: %@." } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Удалена: %@." } }
+      }
+    },
+    "settings.status.deleteFailed" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Failed to delete %@." } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Не удалось удалить %@." } }
+      }
+    },
+    "settings.status.active" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Active: %@." } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Активна: %@." } }
+      }
+    },
+    "settings.status.downloading" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Downloading %@…" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Загрузка %@…" } }
+      }
+    },
+    "settings.status.downloadedActive" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Downloaded and verified, active: %@." } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Скачано и проверено, активна: %@." } }
+      }
+    },
+    "settings.status.checksumMismatch" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Checksum did not match - the file was deleted, try again." } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Контрольная сумма не совпала - файл удалён, попробуйте снова." } }
+      }
+    },
+    "settings.status.downloadError" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Download error: %@" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Ошибка загрузки: %@" } }
+      }
+    },
+    "settings.status.downloadPaused" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Download paused - \"Download\" will resume from the same place." } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Загрузка приостановлена - «Скачать» продолжит с того же места." } }
+      }
+    },
+    "settings.bench.running" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Benchmark %@… (model is loading, ~10-30 sec)" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Бенчмарк %@… (модель грузится, ~10-30 сек)" } }
+      }
+    },
+    "settings.bench.failed" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Benchmark failed (model not downloaded?)." } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Бенчмарк не удался (модель не скачана?)." } }
+      }
+    },
+    "settings.bench.result" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Speed: %.0f tokens/s · first token %@ ms · total %.0f ms" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Скорость: %.0f токенов/с · первый токен %@ мс · всего %.0f мс" } }
+      }
+    },
+    "settings.ram.none" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "You have %.0f GB of RAM - no comfortable models in the catalog." } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "У вас %.0f ГБ ОЗУ - комфортных моделей в каталоге нет." } }
+      }
+    },
+    "settings.ram.recommendation" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "You have %.0f GB of RAM - comfortable up to \"%@\" (~%.1f GB)." } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "У вас %.0f ГБ ОЗУ - комфортно до «%@» (~%.1f ГБ)." } }
+      }
+    },
+    "onboarding.welcome.title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Dopishi" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Допиши" } }
+      }
+    },
+    "onboarding.welcome.body" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "A local autocomplete for the whole Mac: it completes phrases in any app, fixes typos and keyboard layout. The model runs on your Mac - the text is not sent anywhere." } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Локальный автокомплит для всего Mac: дописывает фразы в любом приложении, исправляет опечатки и раскладку. Модель работает на вашем Mac - текст никуда не отправляется." } }
+      }
+    },
+    "onboarding.welcome.steps" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "The wizard will guide you step by step: two system permissions, model selection and a test in a sample field." } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Мастер проведёт по шагам: два системных разрешения, выбор модели и проверка в тестовом поле." } }
+      }
+    },
+    "onboarding.accessibility.title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Step 1 of 4: Accessibility" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Шаг 1 из 4: Accessibility" } }
+      }
+    },
+    "onboarding.accessibility.explanation" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "To see the text and caret position in the active field, Dopishi needs the Accessibility permission." } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Чтобы видеть текст и позицию каретки в активном поле, Допиши нужно разрешение «Универсальный доступ» (Accessibility)." } }
+      }
+    },
+    "onboarding.accessibility.grant" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Grant Accessibility…" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Выдать Accessibility…" } }
+      }
+    },
+    "onboarding.inputMonitoring.title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Step 2 of 4: Input Monitoring" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Шаг 2 из 4: Input Monitoring" } }
+      }
+    },
+    "onboarding.inputMonitoring.explanation" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "To react to typing and the Tab key, the Input Monitoring permission is needed." } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Чтобы реагировать на набор и клавишу Tab, нужно разрешение «Мониторинг ввода» (Input Monitoring)." } }
+      }
+    },
+    "onboarding.inputMonitoring.grant" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Grant Input Monitoring…" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Выдать Input Monitoring…" } }
+      }
+    },
+    "onboarding.permission.granted" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Permission granted" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Разрешение выдано" } }
+      }
+    },
+    "onboarding.permission.notGranted" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Permission not granted yet" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Разрешение ещё не выдано" } }
+      }
+    },
+    "onboarding.permission.afterToggle" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "After the toggle in System Settings, come back here - the status will update on its own." } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "После переключателя в System Settings вернитесь сюда - статус обновится сам." } }
+      }
+    },
+    "onboarding.model.title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Step 3 of 4: model" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Шаг 3 из 4: модель" } }
+      }
+    },
+    "onboarding.model.body" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Suggestions are generated by a local model. Select and download one (you can change it later in settings)." } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Подсказки генерирует локальная модель. Выберите и скачайте одну (можно сменить позже в настройках)." } }
+      }
+    },
+    "onboarding.test.title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Step 4 of 4: test" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Шаг 4 из 4: проверка" } }
+      }
+    },
+    "onboarding.test.body" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Type a couple of words - a continuation will appear in gray. Tab accepts the word, ` (the key above Tab) accepts the whole phrase, Esc hides it." } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Напишите пару слов - серым появится продолжение. Tab принимает слово, ` (клавиша над Tab) - всю фразу, Esc прячет." } }
+      }
+    },
+    "onboarding.test.warmup" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "The first suggestion may take a couple of seconds - the model is warming up." } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Первая подсказка может занять пару секунд - модель прогревается." } }
+      }
+    },
+    "onboarding.ready.title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Done" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Готово" } }
+      }
+    },
+    "onboarding.ready.monitorRunning" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Typing monitor is running" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Слежение за набором запущено" } }
+      }
+    },
+    "onboarding.ready.modelDownloaded" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Model downloaded" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Модель скачана" } }
+      }
+    },
+    "onboarding.ready.body" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Dopishi lives in the menu bar. Settings, privacy and diagnostics are there too." } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Допиши живёт в строке меню. Там же - настройки, приватность и диагностика." } }
+      }
+    },
+    "onboarding.back" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Back" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Назад" } }
+      }
+    },
+    "onboarding.next" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Next" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Далее" } }
+      }
+    },
+    "onboarding.finish" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Finish" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Завершить" } }
+      }
+    },
+    "privacy.pause.header" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Pause" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Пауза" } }
+      }
+    },
+    "privacy.pause.toggle" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Pause Dopishi" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Приостановить Допиши" } }
+      }
+    },
+    "privacy.pause.footer" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Full pause: suggestions, corrections and memory recording are off until you turn it back on." } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Полная пауза: подсказки, исправления и запись памяти выключены, пока не включите обратно." } }
+      }
+    },
+    "privacy.memory.header" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Memory" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Память" } }
+      }
+    },
+    "privacy.memory.toggle" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Memory (remember what was written in the window)" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Память (помнить написанное в окне)" } }
+      }
+    },
+    "privacy.memory.keep" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Keep records" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Хранить записи" } }
+      }
+    },
+    "privacy.memory.clear" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Clear memory…" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Очистить память…" } }
+      }
+    },
+    "privacy.memory.export" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Export…" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Экспортировать…" } }
+      }
+    },
+    "privacy.memory.footer" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Memory is local (SQLite on your Mac), nothing goes to the network. Clearing removes both memory records and suggestion statistics. Export saves the records to a JSON file." } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Память локальная (SQLite на вашем Mac), ничего не уходит в сеть. Очистка удаляет и записи памяти, и статистику подсказок. Экспорт сохраняет записи в JSON-файл." } }
+      }
+    },
+    "privacy.exclusions.header" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Do not learn in apps" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Не учиться в приложениях" } }
+      }
+    },
+    "privacy.exclusions.addApp" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Add an app…" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Добавить приложение…" } }
+      }
+    },
+    "privacy.exclusions.footer" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Suggestions in these apps work, but what is written in them is NOT recorded into memory (a messenger with personal chats, work email, etc.)." } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Подсказки в этих приложениях работают, но написанное в них НЕ записывается в память (мессенджер с личным, рабочая почта и т.п.)." } }
+      }
+    },
+    "privacy.stats.header" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Statistics" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Статистика" } }
+      }
+    },
+    "privacy.stats.toggle" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Local suggestion statistics" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Локальная статистика подсказок" } }
+      }
+    },
+    "privacy.stats.footer" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Metadata only: outcome (shown/accepted/rejected), latency, app, model. Text is NOT saved. Powers diagnostics metrics and adaptive threshold tuning. Kept for 7 days." } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Только метаданные: исход (показана/принята/отклонена), задержка, приложение, модель. Текст НЕ сохраняется. Питает метрики диагностики и адаптивную подстройку порогов. Хранится 7 дней." } }
+      }
+    },
+    "privacy.storage.header" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Storage" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Хранилище" } }
+      }
+    },
+    "privacy.storage.dbSize" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Database size" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Размер базы" } }
+      }
+    },
+    "privacy.storage.kind" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Storage" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Хранение" } }
+      }
+    },
+    "privacy.storage.kindValue" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "plain SQLite file (not encrypted)" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "обычный файл SQLite (не зашифрован)" } }
+      }
+    },
+    "privacy.storage.footer" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "~/Library/Application Support/Dopishi/memory.sqlite - accessible only to your user (mode 0600). There is no file-level encryption; a FileVault disk encrypts it entirely." } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "~/Library/Application Support/Dopishi/memory.sqlite - доступ только у вашего пользователя (права 0600). Шифрования на уровне файла нет; диск с FileVault шифрует его целиком." } }
+      }
+    },
+    "privacy.ttl.days" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : { "stringUnit" : { "state" : "translated", "value" : "%lld day" } },
+              "other" : { "stringUnit" : { "state" : "translated", "value" : "%lld days" } }
+            }
+          }
+        },
+        "ru" : {
+          "variations" : {
+            "plural" : {
+              "one" : { "stringUnit" : { "state" : "translated", "value" : "%lld день" } },
+              "few" : { "stringUnit" : { "state" : "translated", "value" : "%lld дня" } },
+              "many" : { "stringUnit" : { "state" : "translated", "value" : "%lld дней" } },
+              "other" : { "stringUnit" : { "state" : "translated", "value" : "%lld дня" } }
+            }
+          }
+        }
+      }
+    },
+    "diagnostics.section.readiness" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Readiness" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Готовность" } }
+      }
+    },
+    "diagnostics.screenRecording" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Screen recording (for OCR)" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Запись экрана (для OCR)" } }
+      }
+    },
+    "diagnostics.monitorRunning" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Input monitor running" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Монитор ввода запущен" } }
+      }
+    },
+    "diagnostics.masterEnabled" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Enabled by master toggle" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Включено мастер-тумблером" } }
+      }
+    },
+    "diagnostics.model" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Model" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Модель" } }
+      }
+    },
+    "diagnostics.model.notDownloaded" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "not downloaded (%@)" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "не скачана (%@)" } }
+      }
+    },
+    "diagnostics.section.features" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Features" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Фичи" } }
+      }
+    },
+    "diagnostics.features.autocompleteContext" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Autocomplete / context" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Автодополнение / контекст" } }
+      }
+    },
+    "diagnostics.features.layoutAuto" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Layout switching (auto)" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Переключение раскладки (авто)" } }
+      }
+    },
+    "diagnostics.features.manualLayout" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Manual switch (Option tap)" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Ручной свитч (тап Option)" } }
+      }
+    },
+    "diagnostics.features.autocorrect" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Spelling correction" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Исправление написания" } }
+      }
+    },
+    "diagnostics.features.electron" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Electron support" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Поддержка Electron" } }
+      }
+    },
+    "diagnostics.features.contextOcr" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Context: screen OCR" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Контекст: OCR экрана" } }
+      }
+    },
+    "diagnostics.features.contextClipboard" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Context: clipboard" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Контекст: буфер обмена" } }
+      }
+    },
+    "diagnostics.features.contextMemory" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Context: window memory" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Контекст: память окна" } }
+      }
+    },
+    "diagnostics.section.field" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Current field" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Текущее поле" } }
+      }
+    },
+    "diagnostics.field.app" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "App" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Приложение" } }
+      }
+    },
+    "diagnostics.field.profile" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Profile" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Профиль" } }
+      }
+    },
+    "diagnostics.field.tier" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Tier" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Tier" } }
+      }
+    },
+    "diagnostics.field.tierSecure" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "%@  [SECURE]" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "%@  [SECURE]" } }
+      }
+    },
+    "diagnostics.field.caret" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Caret" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Каретка" } }
+      }
+    },
+    "diagnostics.profile.terminal" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "terminal (silent)" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "терминал (молчит)" } }
+      }
+    },
+    "diagnostics.profile.codeEditor" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "code editor (silent)" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "редактор кода (молчит)" } }
+      }
+    },
+    "diagnostics.profile.browser" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "browser" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "браузер" } }
+      }
+    },
+    "diagnostics.profile.native" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "native" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "нативное" } }
+      }
+    },
+    "diagnostics.profile.unknown" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "unknown" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "неизвестно" } }
+      }
+    },
+    "diagnostics.channels.ocr" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "OCR" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "OCR" } }
+      }
+    },
+    "diagnostics.channels.clipboard" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Clipboard" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Буфер" } }
+      }
+    },
+    "diagnostics.channels.memory" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Memory" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Память" } }
+      }
+    },
+    "diagnostics.channels.header" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Context channels (what the model sees)" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Каналы контекста (что видит модель)" } }
+      }
+    },
+    "diagnostics.channels.footer" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "\"off\" - the feature is disabled; \"no data\" - the feature is enabled, but the channel is empty for the current field (no surroundings / clipboard irrelevant / memory empty)." } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "«выкл» - фича отключена; «нет данных» - фича включена, но для текущего поля канал пуст (нет окружения / буфер нерелевантен / память пуста)." } }
+      }
+    },
+    "diagnostics.channels.off" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "off" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "выкл" } }
+      }
+    },
+    "diagnostics.channels.noData" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "no data" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "нет данных" } }
+      }
+    },
+    "diagnostics.channels.empty" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "(empty)" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "(пусто)" } }
+      }
+    },
+    "diagnostics.suggestion.header" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Suggestion" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Подсказка" } }
+      }
+    },
+    "diagnostics.suggestion.lastOutcome" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Last outcome" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Последний исход" } }
+      }
+    },
+    "diagnostics.suggestion.updated" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Updated" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Обновлено" } }
+      }
+    },
+    "diagnostics.suggestion.footer" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "What happened to the last suggestion request in the current field. If there are no suggestions - the reason is here (for example, \"no caret position\" or \"too little typed\")." } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Что произошло с последним запросом подсказки в текущем поле. Если подсказок нет - здесь причина (например, «нет позиции каретки» или «слишком мало набрано»)." } }
+      }
+    },
+    "diagnostics.latency.header" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Latency (last 7 days)" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Latency (последние 7 дней)" } }
+      }
+    },
+    "diagnostics.latency.p50First" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "p50 (to first token)" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "p50 (до первого токена)" } }
+      }
+    },
+    "diagnostics.latency.p95First" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "p95 (to first token)" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "p95 (до первого токена)" } }
+      }
+    },
+    "diagnostics.latency.p50Total" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "p50 (full stream)" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "p50 (весь стрим)" } }
+      }
+    },
+    "diagnostics.latency.p95Total" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "p95 (full stream)" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "p95 (весь стрим)" } }
+      }
+    },
+    "diagnostics.latency.footer" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Time from request to the first token / to the end of the stream. Only shown suggestions (acceptance does not produce a separate measurement)." } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Время от запроса до первого токена / до конца стрима. Только показанные подсказки (принятие не даёт отдельного замера)." } }
+      }
+    },
+    "diagnostics.axRead.header" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "AX read (hot path)" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "AX read (горячий путь)" } }
+      }
+    },
+    "diagnostics.axRead.p50" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "p50 (read)" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "p50 (read)" } }
+      }
+    },
+    "diagnostics.axRead.p95" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "p95 (read)" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "p95 (read)" } }
+      }
+    },
+    "diagnostics.axRead.footer" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Time of one AccessibilityReader.read() per keystroke. Baseline before range-read optimization - for comparing p50/p95." } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Время одного AccessibilityReader.read() на нажатие. Базлайн до оптимизации range-чтения - для сравнения p50/p95." } }
+      }
+    },
+    "diagnostics.refusals.label" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Refusal reasons" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Причины отказа" } }
+      }
+    },
+    "diagnostics.refusals.noData" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "no data" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "нет данных" } }
+      }
+    },
+    "diagnostics.refusals.header" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Why the suggestion was not shown (7 days)" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Почему подсказка не показалась (7 дней)" } }
+      }
+    },
+    "diagnostics.refusals.footer" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Only refusals for an explicit suggestion request: no caret position, empty field, stale context. Auto-suggestion refusals (secure field, excluded app, too little typed) are not recorded here - the current reason is visible in the \"Last outcome\" row." } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Только отказы по явному запросу подсказки: нет позиции каретки, пустое поле, устаревший контекст. Отказы автоподсказки (secure-поле, исключённое приложение, мало набрано) сюда не пишутся - текущую причину видно в строке «Последний исход»." } }
+      }
+    },
+    "diagnostics.secretDropped.header" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Privacy guard" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Защита приватности" } }
+      }
+    },
+    "diagnostics.secretDropped.label" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Secrets dropped" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Секретов отброшено" } }
+      }
+    },
+    "diagnostics.secretDropped.count" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : { "stringUnit" : { "state" : "translated", "value" : "%lld secret" } },
+              "other" : { "stringUnit" : { "state" : "translated", "value" : "%lld secrets" } }
+            }
+          }
+        },
+        "ru" : {
+          "variations" : {
+            "plural" : {
+              "one" : { "stringUnit" : { "state" : "translated", "value" : "%lld секрет" } },
+              "few" : { "stringUnit" : { "state" : "translated", "value" : "%lld секрета" } },
+              "many" : { "stringUnit" : { "state" : "translated", "value" : "%lld секретов" } },
+              "other" : { "stringUnit" : { "state" : "translated", "value" : "%lld секрета" } }
+            }
+          }
+        }
+      }
+    },
+    "diagnostics.secretDropped.footer" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "How many times the privacy guard dropped a fragment with a detected secret (API key, token, private key) before it could reach memory. Only the count is stored - never the text itself." } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Сколько раз защита приватности отбросила фрагмент с найденным секретом (API-ключ, токен, приватный ключ) до того, как он попал бы в память. Хранится только число - никогда сам текст." } }
+      }
+    },
+    "diagnostics.bool.yes" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "yes" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "да" } }
+      }
+    },
+    "diagnostics.bool.no" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "no" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "нет" } }
+      }
+    },
+    "diagnostics.ms" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "%lld ms" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "%lld мс" } }
+      }
+    },
+    "menu.downloadModel" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Download model…" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Скачать модель…" } }
+      }
+    },
+    "menu.grantAccessibility" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Grant Accessibility…" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Выдать Accessibility…" } }
+      }
+    },
+    "menu.grantInputMonitoring" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Grant Input Monitoring…" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Выдать Input Monitoring…" } }
+      }
+    },
+    "menu.diagnostics" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Diagnostics…" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Диагностика…" } }
+      }
+    },
+    "menu.toggleHud" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Show/hide debug HUD" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Показать/скрыть debug-HUD" } }
+      }
+    },
+    "menu.settings" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Settings…" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Настройки…" } }
+      }
+    },
+    "menu.privacy" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Privacy…" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Приватность…" } }
+      }
+    },
+    "menu.setupWizard" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Setup wizard…" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Мастер настройки…" } }
+      }
+    },
+    "menu.quit" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Quit" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Выход" } }
+      }
+    },
+    "window.settings" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Dopishi - Settings" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Допиши - настройки" } }
+      }
+    },
+    "window.privacy" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Dopishi - Privacy" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Допиши - приватность" } }
+      }
+    },
+    "window.onboarding" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Welcome to Dopishi" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Добро пожаловать в Допиши" } }
+      }
+    },
+    "window.diagnostics" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Dopishi - Diagnostics" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Допиши - диагностика" } }
+      }
+    },
+    "memory.export.error.title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Could not export memory" } },
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Не удалось экспортировать память" } }
+      }
+    }
+  }
+}

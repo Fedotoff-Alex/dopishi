@@ -29,7 +29,7 @@ final class SelectionActionController {
         resultLabel.textColor = .labelColor
         resultLabel.preferredMaxLayoutWidth = 440
 
-        hintLabel = NSTextField(labelWithString: "Tab - заменить · Esc - отмена")
+        hintLabel = NSTextField(labelWithString: L.tr("selection.hud.hint"))
         hintLabel.font = .systemFont(ofSize: 10)
         hintLabel.textColor = .tertiaryLabelColor
 
@@ -100,7 +100,7 @@ final class SelectionActionController {
         guard let payload = item.representedObject as? MenuPayload else { return }
         originalSelection = payload.selection
         pendingResult = nil
-        show(text: "Генерирую (\(payload.action.menuTitle.lowercased()))…", ctx: payload.ctx, pending: true)
+        show(text: L.tr("selection.hud.generating", L.tr(payload.action.menuTitle).lowercased()), ctx: payload.ctx, pending: true)
         let action = payload.action
         let selection = payload.selection
         generationTask?.cancel()
@@ -112,7 +112,7 @@ final class SelectionActionController {
                 self.pendingResult = result
                 self.show(text: result, ctx: payload.ctx, pending: false)
             } else {
-                self.show(text: "Не получилось - попробуй ещё раз", ctx: payload.ctx, pending: true)
+                self.show(text: L.tr("selection.hud.failed"), ctx: payload.ctx, pending: true)
                 Task { [weak self] in
                     try? await Task.sleep(for: .seconds(2))
                     if self?.pendingResult == nil { self?.dismiss() }
@@ -127,7 +127,7 @@ final class SelectionActionController {
         guard let result = pendingResult, let original = originalSelection else { dismiss(); return }
         let fresh = AccessibilityReader.read().selectedText
         guard fresh == original else {
-            show(text: "Выделение изменилось - замена отменена", ctx: nil, pending: true)
+            show(text: L.tr("selection.hud.selectionChanged"), ctx: nil, pending: true)
             pendingResult = nil
             Task { [weak self] in
                 try? await Task.sleep(for: .seconds(2))

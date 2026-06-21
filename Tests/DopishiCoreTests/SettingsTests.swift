@@ -23,4 +23,21 @@ import Foundation
         let back = try JSONDecoder().decode(Settings.self, from: data)
         #expect(back == s)
     }
+    // MODEL-03 D-04: дефолт manuallySelected == false (рекомендация активна до ручного выбора).
+    @Test func manuallySelectedDefaultsFalse() {
+        #expect(Settings.default.manuallySelected == false)
+    }
+    // SC3 (часть): старый persisted JSON без ключа manuallySelected -> false (backward-compat).
+    @Test func decodesOldDataWithoutManuallySelected() throws {
+        let old = #"{"selectedModelFile":"Qwen3.5-4B-Q4_K_M.gguf"}"#.data(using: .utf8)!
+        let s = try JSONDecoder().decode(Settings.self, from: old)
+        #expect(s.manuallySelected == false)
+    }
+    // manuallySelected=true переживает encode/decode round-trip.
+    @Test func manuallySelectedRoundTrip() throws {
+        let s = Settings(manuallySelected: true)
+        let data = try JSONEncoder().encode(s)
+        let back = try JSONDecoder().decode(Settings.self, from: data)
+        #expect(back.manuallySelected == true)
+    }
 }

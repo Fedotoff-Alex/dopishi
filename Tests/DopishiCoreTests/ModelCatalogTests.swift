@@ -6,6 +6,13 @@ import Foundation
     @Test func hasEightPresets() {
         #expect(ModelCatalog.presets.count == 8)
     }
+    // D-11: каждый tier - стабильный id (App локализует через L.tr), не пустой, с префиксом model.tier.
+    @Test func everyPresetTierIsStableId() {
+        for p in ModelCatalog.presets {
+            #expect(!p.tier.isEmpty)
+            #expect(p.tier.hasPrefix("model.tier."))
+        }
+    }
     // MODEL-01: T-lite от Т-Банка (t-tech), официальный GGUF, Apache 2.0.
     @Test func tlitePresetIsApacheLicensed() {
         let t = ModelCatalog.preset(id: "T-lite-it-2.1-Q4_K_M.gguf")
@@ -39,7 +46,8 @@ import Foundation
     }
     @Test func qwen3InstructPresetURL() {
         let p = ModelCatalog.preset(id: "Qwen3-4B-Instruct-2507-Q4_K_M.gguf")!
-        #expect(p.tier == "лучшее RU")
+        // D-11: tier - стабильный id назначения (App локализует через L.tr), не русский текст.
+        #expect(p.tier == "model.tier.bestRu")
         // remoteFileName с префиксом Qwen_, локальное имя без него (проверенный bartowski URL).
         #expect(p.downloadURL.absoluteString == "https://huggingface.co/bartowski/Qwen_Qwen3-4B-Instruct-2507-GGUF/resolve/main/Qwen_Qwen3-4B-Instruct-2507-Q4_K_M.gguf")
     }

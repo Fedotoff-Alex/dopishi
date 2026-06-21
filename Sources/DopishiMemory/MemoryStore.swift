@@ -1,5 +1,6 @@
 import Foundation
 import GRDB
+import DopishiCore
 
 /// Локальное хранилище памяти контекста на SQLite (через GRDB). Живёт на диске
 /// (~/Library/Application Support/Dopishi/memory.sqlite) или в памяти (тесты).
@@ -101,6 +102,7 @@ public final class MemoryStore: @unchecked Sendable {
                        now: Date = Date(), ttl: TimeInterval? = MemoryStore.defaultTTL) throws {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
+        guard !SecretGuard.looksSecret(trimmed) else { return }   // ВОРОНКА 1: дроп целиком (D-04)
         let expires = ttl.map { now.addingTimeInterval($0) }
         try dbQueue.write { db in
             var row = ContextItemRow(id: nil, threadKey: threadKey, kind: kind.rawValue,

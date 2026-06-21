@@ -12,15 +12,16 @@ public enum SelectionAction: CaseIterable, Sendable {
     case toneFormal   // деловой тон
     case toneFriendly // дружелюбный тон
 
+    /// Стабильный id заголовка пункта меню; локализуется в App через L.tr (D-11, Open Q3).
     public var menuTitle: String {
         switch self {
-        case .fix: return "Исправить ошибки"
-        case .rewrite: return "Переписать"
-        case .shorten: return "Сократить"
-        case .expand: return "Расширить"
-        case .translate: return "Перевести"
-        case .toneFormal: return "Тон: деловой"
-        case .toneFriendly: return "Тон: дружелюбный"
+        case .fix: return "selection.action.fix"
+        case .rewrite: return "selection.action.rewrite"
+        case .shorten: return "selection.action.shorten"
+        case .expand: return "selection.action.expand"
+        case .translate: return "selection.action.translate"
+        case .toneFormal: return "selection.action.toneFormal"
+        case .toneFriendly: return "selection.action.toneFriendly"
         }
     }
 

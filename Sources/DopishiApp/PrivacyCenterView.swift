@@ -11,33 +11,33 @@ struct PrivacyCenterView: View {
     var body: some View {
         Form {
             Section {
-                Toggle("Приостановить Допиши", isOn: Binding(
+                Toggle(L.tr("privacy.pause.toggle"), isOn: Binding(
                     get: { !vm.config.enabled },
                     set: { vm.config.enabled = !$0 }
                 ))
             } header: {
-                Text("Пауза")
+                Text(L.tr("privacy.pause.header"))
             } footer: {
-                Text("Полная пауза: подсказки, исправления и запись памяти выключены, пока не включите обратно.")
+                Text(L.tr("privacy.pause.footer"))
                     .font(.caption).foregroundStyle(.secondary)
             }
 
             Section {
-                Toggle("Память (помнить написанное в окне)", isOn: $vm.config.memoryEnabled)
-                Picker("Хранить записи", selection: $vm.config.memoryTTLDays) {
+                Toggle(L.tr("privacy.memory.toggle"), isOn: $vm.config.memoryEnabled)
+                Picker(L.tr("privacy.memory.keep"), selection: $vm.config.memoryTTLDays) {
                     ForEach(Self.ttlChoices, id: \.self) { d in
-                        Text(Self.ttlLabel(d)).tag(d)
+                        Text(L.tr("privacy.ttl.days", d)).tag(d)
                     }
                 }
                 HStack {
-                    Button("Очистить память…") { vm.clearMemory() }
-                    Button("Экспортировать…") { vm.exportMemory() }
+                    Button(L.tr("privacy.memory.clear")) { vm.clearMemory() }
+                    Button(L.tr("privacy.memory.export")) { vm.exportMemory() }
                         .disabled(!vm.config.memoryEnabled)
                 }
             } header: {
-                Text("Память")
+                Text(L.tr("privacy.memory.header"))
             } footer: {
-                Text("Память локальная (SQLite на вашем Mac), ничего не уходит в сеть. Очистка удаляет и записи памяти, и статистику подсказок. Экспорт сохраняет записи в JSON-файл.")
+                Text(L.tr("privacy.memory.footer"))
                     .font(.caption).foregroundStyle(.secondary)
             }
 
@@ -54,34 +54,34 @@ struct PrivacyCenterView: View {
                         .buttonStyle(.plain)
                     }
                 }
-                Menu("Добавить приложение…") {
+                Menu(L.tr("privacy.exclusions.addApp")) {
                     ForEach(vm.pickableMemoryApps) { app in
                         Button(app.name) { vm.addMemoryExclusion(bundleId: app.id) }
                     }
                 }
             } header: {
-                Text("Не учиться в приложениях")
+                Text(L.tr("privacy.exclusions.header"))
             } footer: {
-                Text("Подсказки в этих приложениях работают, но написанное в них НЕ записывается в память (мессенджер с личным, рабочая почта и т.п.).")
+                Text(L.tr("privacy.exclusions.footer"))
                     .font(.caption).foregroundStyle(.secondary)
             }
 
             Section {
-                Toggle("Локальная статистика подсказок", isOn: $vm.config.suggestionTelemetryEnabled)
+                Toggle(L.tr("privacy.stats.toggle"), isOn: $vm.config.suggestionTelemetryEnabled)
             } header: {
-                Text("Статистика")
+                Text(L.tr("privacy.stats.header"))
             } footer: {
-                Text("Только метаданные: исход (показана/принята/отклонена), задержка, приложение, модель. Текст НЕ сохраняется. Питает метрики диагностики и адаптивную подстройку порогов. Хранится 7 дней.")
+                Text(L.tr("privacy.stats.footer"))
                     .font(.caption).foregroundStyle(.secondary)
             }
 
             Section {
-                LabeledContent("Размер базы", value: vm.memoryDbSizeText)
-                LabeledContent("Хранение", value: "обычный файл SQLite (не зашифрован)")
+                LabeledContent(L.tr("privacy.storage.dbSize"), value: vm.memoryDbSizeText)
+                LabeledContent(L.tr("privacy.storage.kind"), value: L.tr("privacy.storage.kindValue"))
             } header: {
-                Text("Хранилище")
+                Text(L.tr("privacy.storage.header"))
             } footer: {
-                Text("~/Library/Application Support/Dopishi/memory.sqlite - доступ только у вашего пользователя (права 0600). Шифрования на уровне файла нет; диск с FileVault шифрует его целиком.")
+                Text(L.tr("privacy.storage.footer"))
                     .font(.caption).foregroundStyle(.secondary)
             }
         }
@@ -90,14 +90,6 @@ struct PrivacyCenterView: View {
         .onAppear { vm.refreshPrivacyStats() }
         .onChange(of: vm.config) { _, _ in
             vm.persist()
-        }
-    }
-
-    private static func ttlLabel(_ days: Int) -> String {
-        switch days {
-        case 1: return "1 день"
-        case 3, 7, 14, 30, 90: return days < 5 ? "\(days) дня" : "\(days) дней"
-        default: return "\(days) дн."
         }
     }
 }

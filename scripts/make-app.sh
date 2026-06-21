@@ -36,11 +36,29 @@ if [ -d "$BIN_DIR/llama.framework" ]; then
     cp -R "$BIN_DIR/llama.framework" "$BUNDLE_DIR/Contents/MacOS/llama.framework"
 fi
 
+# Встроить SwiftPM resource bundle DopishiApp рядом с бинарём (UX-07): Bundle.module ищет
+# свой .bundle по @loader_path, иначе shipped .app не увидит .xcstrings/.lproj и локализация
+# не доедет (Dopishi_DopishiApp.bundle несёт en.lproj/ru.lproj). Образец - копирование
+# llama.framework выше. Копируем ТОЛЬКО бандл DopishiApp - чужие resource-бандлы зависимостей
+# (GRDB/LocalLLMClient) приложению рядом с бинарём не нужны и часто без Info.plist (не подписать).
+echo "==> embedding resource bundle"
+APP_RES_BUNDLE="$BIN_DIR/Dopishi_DopishiApp.bundle"
+if [ -d "$APP_RES_BUNDLE" ]; then
+    cp -R "$APP_RES_BUNDLE" "$BUNDLE_DIR/Contents/MacOS/"
+else
+    echo "WARNING: $APP_RES_BUNDLE не найден - локализация не доедет до .app" >&2
+fi
+
 echo "==> codesign: ${CODESIGN_ID}"
-# Вложенный фреймворк подписываем первым, затем весь бандл.
+# Вложенные code-объекты подписываем первыми, затем весь бандл.
 if [ -d "$BUNDLE_DIR/Contents/MacOS/llama.framework" ]; then
     codesign --force --sign "$CODESIGN_ID" "$BUNDLE_DIR/Contents/MacOS/llama.framework"
 fi
+# resource bundles тоже подписываем (иначе строгая подпись внешнего .app падает на
+# неподписанном вложенном bundle - "code object is not signed at all").
+for b in "$BUNDLE_DIR/Contents/MacOS"/*.bundle; do
+    [ -e "$b" ] && codesign --force --sign "$CODESIGN_ID" "$b"
+done
 codesign --force --sign "$CODESIGN_ID" "$BUNDLE_DIR"
 
 echo "==> done: $BUNDLE_DIR"

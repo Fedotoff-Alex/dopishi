@@ -20,11 +20,19 @@ final class MemoryProvider {
     private(set) var latest: String?
 
     private var store: MemoryStore?
+    /// Наблюдаемость secret-drop (D-06). Слабая ссылка - DiagnosticsCenter живёт в App.
+    /// Инъекция (memoryProvider.setDiagnostics) делается из AppDelegate (Plan 08-04).
+    private weak var diagnostics: DiagnosticsCenter?
     private var currentThreadKey: String?
     private var lastRecorded: [String: String] = [:]   // дедуп записи по потоку
     /// Дебаунс FTS-пересчёта снимка (MEM-01): последний собранный MATCH-запрос и время.
     private var lastFTSQuery = ""
     private var lastFTSAt = Date.distantPast
+
+    /// Подключить DiagnosticsCenter для наблюдаемости secret-drop (D-06). По образцу
+    /// DiagnosticsCenter.setEventStore - так App-классы получают зависимости. Фактический
+    /// вызов из AppDelegate выполняет Plan 08-04 (этот план только объявляет проводку).
+    func setDiagnostics(_ d: DiagnosticsCenter?) { diagnostics = d }
 
     private func ensureStore() -> MemoryStore? {
         if let store { return store }
@@ -53,7 +61,8 @@ final class MemoryProvider {
         guard enabled else { return }
         if let bid = Self.bundleId(fromThreadKey: threadKey), learningExcluded.contains(bid) { return }
         let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard t.count >= 2, !ClipboardContentDistiller.looksSecret(t) else { return }
+        guard t.count >= 2 else { return }
+        if SecretGuard.looksSecret(t) { diagnostics?.noteSecretDropped(); return }   // D-06: только счётчик, не текст
         guard lastRecorded[threadKey] != t else { return }   // не дублируем подряд тот же текст
         if lastRecorded.count >= 128 { lastRecorded.removeAll() }   // защита от роста за сессию
         lastRecorded[threadKey] = t

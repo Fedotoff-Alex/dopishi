@@ -67,7 +67,14 @@ final class ContextProbe {
                     self.monitor.correctionUndoable = false   // новое нажатие закрывает окно отката Esc
                     self.buffer = self.buffer.appending(s)
                     let ctx = self.recompute()
-                    if let ch = s.last, WordBoundary.isBoundary(ch), !ctx.isSecure, ctx.capability != .none,
+                    if let ch = s.last, WordBoundary.isBoundary(ch),
+                       // Буквы ЙЦУКЕН на клавишах-пунктуации (;=ж ,=б .=ю [=х ]=ъ `=ё) при наборе
+                       // русского в EN-раскладке прилетают КАК пунктуация-граница. Но это буквы
+                       // ВНУТРИ слова - не завершаем его, иначе wordCompleted сконвертит обрезанный
+                       // префикс и свитчнет раскладку посреди слова ("ghjljk;b"->"продол;и"). Ждём
+                       // настоящий пробел: тогда целый токен "ghjljk;b" уйдёт в tryTokenLayout->"продолжи".
+                       !WordBoundary.endsMislayoutToken(self.buffer.text),
+                       !ctx.isSecure, ctx.capability != .none,
                        AppPolicy.isAllowed(bundleId: ctx.appBundleId, excluded: self.excludedBundleIds) {
                         // Автокоррекция/раскладка срабатывают на ГРАНИЦЕ слова - их guard требует,
                         // чтобы текст оканчивался границей. В Electron AX отстаёт и только что
@@ -353,7 +360,7 @@ final class ContextProbe {
             let s = pb.string(forType: .string)?.trimmingCharacters(in: .whitespacesAndNewlines)
             // Секрет (ключ/пароль) дропаем на чтении; иначе кэшируем sanitize по changeCount,
             // чтобы не гонять его на каждый keystroke (distill зависит от префикса - считаем заново).
-            if let s, !s.isEmpty, !ClipboardContentDistiller.looksSecret(s) {
+            if let s, !s.isEmpty, !SecretGuard.looksSecret(s) {
                 lastClipText = s
                 lastClipSanitized = PromptContextSanitizer.sanitize(s)
             } else {

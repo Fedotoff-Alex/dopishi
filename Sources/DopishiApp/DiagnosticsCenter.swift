@@ -39,14 +39,14 @@ struct DiagnosticsContext: Equatable {
 
     static let empty = DiagnosticsContext()
 
-    /// Русский ярлык категории профиля приложения.
+    /// Стабильный id категории профиля приложения; DiagnosticsView локализует через L.tr (D-10/D-11).
     private static func profileLabel(_ c: AppCategory) -> String {
         switch c {
-        case .terminal: return "терминал (молчит)"
-        case .codeEditor: return "редактор кода (молчит)"
-        case .browser: return "браузер"
-        case .native: return "нативное"
-        case .unknown: return "неизвестно"
+        case .terminal: return "diagnostics.profile.terminal"
+        case .codeEditor: return "diagnostics.profile.codeEditor"
+        case .browser: return "diagnostics.profile.browser"
+        case .native: return "diagnostics.profile.native"
+        case .unknown: return "diagnostics.profile.unknown"
         }
     }
 
@@ -54,7 +54,7 @@ struct DiagnosticsContext: Equatable {
         let caret = ctx.caretScreenRect.map {
             "(\(Int($0.minX)),\(Int($0.minY))) \(Int($0.width))x\(Int($0.height))"
         } ?? "-"
-        let ocr = ctx.ocr.map { $0.windowText.isEmpty ? "(пусто)" : String($0.windowText.prefix(80)) }
+        let ocr = ctx.ocr.map { $0.windowText.isEmpty ? L.tr("diagnostics.channels.empty") : String($0.windowText.prefix(80)) }
         let clip = ctx.clipboard.map { String($0.prefix(80)) }
         let mem = ctx.memory.map { String($0.prefix(80)) }
         return DiagnosticsContext(
@@ -91,6 +91,9 @@ final class DiagnosticsCenter: ObservableObject {
     @Published private(set) var updatedAt: Date?
     @Published private(set) var latencyMetrics: LatencyMetrics = .empty
     @Published private(set) var refusalCounts: [String: Int] = [:]
+    /// Счётчик сработавшего privacy-guard на App-входе записи памяти (D-06, MEM-06).
+    /// В метрику попадает ТОЛЬКО число - сырой текст секрета сюда НИКОГДА не передаётся.
+    @Published private(set) var secretDropped = 0
 
     private var eventStore: SuggestionEventStore?
 
@@ -121,6 +124,10 @@ final class DiagnosticsCenter: ObservableObject {
         guard counts != refusalCounts else { return }
         refusalCounts = counts
     }
+
+    /// Зафиксировать факт дропа секрета (D-06). Принимает ТОЛЬКО факт - инкремент числа.
+    /// Сознательно без текст-параметра: сырой секрет не должен доходить до метрики/лога.
+    func noteSecretDropped() { secretDropped += 1 }
 
     func setRuntime(_ r: DiagnosticsRuntime) {
         guard r != runtime else { return }

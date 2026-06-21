@@ -5,8 +5,13 @@ gray "ghost" suggestions at the caret in almost any app and completes your text 
 press Tab - similar in spirit to Cotypist and Cotabby, but built from scratch as a learning
 and open-source project. Everything runs on-device; nothing is sent to the network.
 
-> Status: experimental / personal project (v0.9.1 beta). It builds, is covered by ~470 tests,
+> Status: experimental / personal project (v0.9.2 beta). It builds, is covered by ~510 tests,
 > and works day to day, but it is not a polished release yet (see Limitations). Use at your own risk.
+>
+> New in v0.9.2: UI localization (ru/en, auto by system language), per-language model
+> recommendation in onboarding & Model Manager (manual choice never overwritten), a cross-cutting
+> secret guard (secrets never reach memory/prompt), and layout-fix for Cyrillic letters that sit on
+> QWERTY punctuation keys (now convert as whole words).
 
 ## What it does
 

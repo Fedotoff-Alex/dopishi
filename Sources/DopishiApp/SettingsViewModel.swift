@@ -28,9 +28,10 @@ final class SettingsViewModel: ObservableObject {
     @Published var downloadProgress: Double = 0
     @Published var statusText: String = ""
     /// Размер базы памяти для Privacy Center (обновляется refreshPrivacyStats()).
-    @Published var memoryDbSizeText: String = "база не создана"
+    @Published var memoryDbSizeText: String = L.tr("settings.dbSize.none")
     private let store: SettingsStore
-    private let ramGB = Double(ProcessInfo.processInfo.physicalMemory) / 1_073_741_824.0
+    // non-private: используется и в modelRows-бейдже (рекомендация), и в OnboardingViewModel-преселекте.
+    let ramGB = Double(ProcessInfo.processInfo.physicalMemory) / 1_073_741_824.0
     var onChange: ((Settings) -> Void)?
     /// Колбэк кнопки «Очистить память» (AppDelegate -> memoryProvider.clear()).
     var onClearMemory: (() -> Void)?
@@ -64,13 +65,13 @@ final class SettingsViewModel: ObservableObject {
     /// Пересчитать показатели Privacy Center (размер базы). Зовётся при открытии окна.
     func refreshPrivacyStats() {
         guard let bytes = memoryDbSizeProvider?() else {
-            memoryDbSizeText = "база не создана"
+            memoryDbSizeText = L.tr("settings.dbSize.none")
             return
         }
         let mb = Double(bytes) / 1_048_576.0
         memoryDbSizeText = mb < 0.1
-            ? String(format: "%.0f КБ", Double(bytes) / 1024.0)
-            : String(format: "%.1f МБ", mb)
+            ? L.tr("settings.dbSize.kb", Double(bytes) / 1024.0)
+            : L.tr("settings.dbSize.mb", mb)
     }
 
     // MARK: - «Не учиться в этом приложении» (Privacy Center, UX-02)
@@ -98,19 +99,28 @@ final class SettingsViewModel: ObservableObject {
     }
 
     var modelRows: [ModelRow] {
-        ModelCatalog.presets.map { p in
-            let heavy = ModelCatalog.fitsComfortably(p, ramGB: ramGB) ? "" : " · тяжело для ОЗУ"
+        // D-03/D-05: рекомендация под язык системы (Locale.preferredLanguages.first) + RAM.
+        // Вычисляется один раз перед .map; бейдж - read-only строка, config не трогает.
+        let locale = Locale.preferredLanguages.first ?? "en"
+        let rec = ModelCatalog.recommended(forLocale: locale, ramGB: ramGB)
+        let isRu = Locale(identifier: locale).language.languageCode?.identifier == "ru"
+        let recBadge = isRu ? L.tr("settings.model.recommended.ru") : L.tr("settings.model.recommended.en")
+        return ModelCatalog.presets.map { p in
+            let heavy = ModelCatalog.fitsComfortably(p, ramGB: ramGB) ? "" : L.tr("settings.model.heavyForRam")
+            // Бейдж рекомендации приклеивается к detail тем же приёмом, что heavy-for-RAM (D-03).
+            let badge = (p.fileName == rec.fileName) ? recBadge : ""
             // Фактический размер на диске точнее каталожного approx (UX-04).
             let sizeText: String
             if let real = Self.diskSizeGB(fileName: p.fileName) {
-                sizeText = String(format: "%.1f ГБ на диске", real)
+                sizeText = L.tr("settings.model.sizeOnDisk", real)
             } else {
-                sizeText = String(format: "%.1f ГБ", p.approxSizeGB)
+                sizeText = L.tr("settings.model.size", p.approxSizeGB)
             }
             return ModelRow(
                 id: p.id,
                 name: p.displayName,
-                detail: "\(p.tier) · " + sizeText + heavy,
+                // D-11: tier - стабильный id из Core, локализуется здесь через L.tr.
+                detail: "\(L.tr(p.tier)) · " + sizeText + badge + heavy,
                 downloaded: ModelLocator.isPresent(fileName: p.fileName),
                 selected: config.selectedModelFile == p.fileName,
                 downloading: downloadingId == p.id
@@ -122,7 +132,7 @@ final class SettingsViewModel: ObservableObject {
     var modelsTotalText: String {
         let total = ModelCatalog.presets.compactMap { Self.diskSizeGB(fileName: $0.fileName) }.reduce(0, +)
         guard total > 0 else { return "" }
-        return String(format: "Всего на диске: %.1f ГБ", total)
+        return L.tr("settings.model.totalOnDisk", total)
     }
 
     private static func diskSizeGB(fileName: String) -> Double? {
@@ -139,9 +149,9 @@ final class SettingsViewModel: ObservableObject {
               downloadingId != p.id else { return }
         do {
             try FileManager.default.removeItem(at: ModelLocator.url(forFile: p.fileName))
-            statusText = "Удалена: \(p.displayName)."
+            statusText = L.tr("settings.status.deleted", p.displayName)
         } catch {
-            statusText = "Не удалось удалить \(p.displayName)."
+            statusText = L.tr("settings.status.deleteFailed", p.displayName)
         }
         objectWillChange.send()
     }
@@ -153,13 +163,15 @@ final class SettingsViewModel: ObservableObject {
         guard let p = ModelCatalog.preset(id: modelId) else { return }
         if ModelLocator.isPresent(fileName: p.fileName) {
             config.selectedModelFile = p.fileName
+            // D-04 (SC3): явный ручной выбор - автоматика-преселект больше не перетирает выбор.
+            config.manuallySelected = true
             persist()
-            statusText = "Активна: \(p.displayName)."
+            statusText = L.tr("settings.status.active", p.displayName)
             return
         }
         downloadingId = p.id
         downloadProgress = 0
-        statusText = "Загрузка \(p.displayName)…"
+        statusText = L.tr("settings.status.downloading", p.displayName)
         let d = ModelDownloader()
         downloader = d
         Task {
@@ -170,24 +182,26 @@ final class SettingsViewModel: ObservableObject {
                 self.downloadingId = nil
                 self.downloader = nil
                 self.config.selectedModelFile = p.fileName
+                // D-04 (SC3): явный ручной выбор - автоматика-преселект больше не перетирает выбор.
+                self.config.manuallySelected = true
                 self.persist()
-                self.statusText = "Скачано и проверено, активна: \(p.displayName)."
+                self.statusText = L.tr("settings.status.downloadedActive", p.displayName)
             } catch let e as ModelDownloader.DownloadError {
                 self.downloadingId = nil
                 self.downloader = nil
                 if case .checksumMismatch = e {
-                    self.statusText = "Контрольная сумма не совпала - файл удалён, попробуйте снова."
+                    self.statusText = L.tr("settings.status.checksumMismatch")
                 } else {
-                    self.statusText = "Ошибка загрузки: \(e)"
+                    self.statusText = L.tr("settings.status.downloadError", "\(e)")
                 }
             } catch let e as URLError where e.code == .cancelled {
                 self.downloadingId = nil
                 self.downloader = nil
-                self.statusText = "Загрузка приостановлена - «Скачать» продолжит с того же места."
+                self.statusText = L.tr("settings.status.downloadPaused")
             } catch {
                 self.downloadingId = nil
                 self.downloader = nil
-                self.statusText = "Ошибка загрузки: \(error.localizedDescription)"
+                self.statusText = L.tr("settings.status.downloadError", error.localizedDescription)
             }
         }
     }
@@ -201,17 +215,16 @@ final class SettingsViewModel: ObservableObject {
     func benchCurrentModel() {
         guard !benchRunning, let bench = onBenchModel else { return }
         benchRunning = true
-        statusText = "Бенчмарк \(config.selectedModelFile)… (модель грузится, ~10-30 сек)"
+        statusText = L.tr("settings.bench.running", config.selectedModelFile)
         Task {
             let trace = await bench()
             self.benchRunning = false
             guard let trace else {
-                self.statusText = "Бенчмарк не удался (модель не скачана?)."
+                self.statusText = L.tr("settings.bench.failed")
                 return
             }
             let first = trace.firstTokenMs.map { String(format: "%.0f", $0) } ?? "-"
-            self.statusText = String(format: "Скорость: %.0f токенов/с · первый токен %@ мс · всего %.0f мс",
-                                     trace.tokensPerSec, first, trace.totalMs)
+            self.statusText = L.tr("settings.bench.result", trace.tokensPerSec, first, trace.totalMs)
         }
     }
 
@@ -219,10 +232,9 @@ final class SettingsViewModel: ObservableObject {
     var ramRecommendationText: String {
         let fitting = ModelCatalog.presets.filter { ModelCatalog.fitsComfortably($0, ramGB: ramGB) }
         guard let best = fitting.max(by: { $0.approxSizeGB < $1.approxSizeGB }) else {
-            return String(format: "У вас %.0f ГБ ОЗУ - комфортных моделей в каталоге нет.", ramGB)
+            return L.tr("settings.ram.none", ramGB)
         }
-        return String(format: "У вас %.0f ГБ ОЗУ - комфортно до «%@» (~%.1f ГБ).",
-                      ramGB, best.displayName, best.approxSizeGB)
+        return L.tr("settings.ram.recommendation", ramGB, best.displayName, best.approxSizeGB)
     }
 
     /// Исключённые приложения с человекочитаемыми именами.

@@ -10,6 +10,37 @@ import Testing
         #expect(!WordBoundary.isBoundary("я"))
         #expect(!WordBoundary.isBoundary("-"))
     }
+
+    // Баг (UAT, воспроизведён 3х): буквы ЙЦУКЕН на клавишах-пунктуации (;=ж ,=б .=ю [=х ]=ъ `=ё)
+    // при наборе русского в EN-раскладке прилетают как пунктуация-граница -> wordCompleted
+    // конвертит обрезанный латинский префикс и свитчит раскладку ПОСРЕДИ слова
+    // («ghjljk;b»->«продол;и», «nf,kbw»->«та,лиц», «dskj;bv»->«выло;им»).
+    // endsMislayoutToken распознаёт такой символ как ПРОДОЛЖЕНИЕ слова (не границу).
+    @Test func mislayoutLetterPunctIsNotBoundary() {
+        // Латинский префикс + клавиша-буква = mislayout, слово продолжается (НЕ граница).
+        #expect(WordBoundary.endsMislayoutToken("ghjljk;"))   // продол|жи -> ; это ж
+        #expect(WordBoundary.endsMislayoutToken("nf,"))       // та|блиц -> , это б
+        #expect(WordBoundary.endsMislayoutToken("dskj;"))     // выло|жим -> ; это ж
+        #expect(WordBoundary.endsMislayoutToken("k."))        // лю|бой -> . это ю
+        #expect(WordBoundary.endsMislayoutToken("xnj`"))      // что|ё -> ` это ё
+        #expect(WordBoundary.endsMislayoutToken("[fhbtn["))   // (буква-клавиша [ внутри)
+    }
+
+    @Test func realPunctuationStaysBoundary() {
+        // Кириллический префикс + запятая = настоящая запятая, слово завершено (граница).
+        #expect(!WordBoundary.endsMislayoutToken("привет,"))
+        #expect(!WordBoundary.endsMislayoutToken("привет."))
+        #expect(!WordBoundary.endsMislayoutToken("слово;"))
+        // Запятая в начале токена / без латинского префикса (",eltn"=будет уже на пробеле
+        // обрабатывается tryTokenLayout; здесь буфер до запятой пуст) - граница.
+        #expect(!WordBoundary.endsMislayoutToken(","))
+        #expect(!WordBoundary.endsMislayoutToken("привет ,"))
+        // Цифры (число "10," в наборе) - не латинское слово, граница.
+        #expect(!WordBoundary.endsMislayoutToken("10,"))
+        // Пробел/перенос - не клавиша-буква, обычная граница (функция не для них).
+        #expect(!WordBoundary.endsMislayoutToken("ghjljk "))
+        #expect(!WordBoundary.endsMislayoutToken("ghjljk"))   // нет граничного символа
+    }
     @Test func lastWord() {
         #expect(WordEdit.lastWord(of: "привет мир") == "мир")
         #expect(WordEdit.lastWord(of: "привет мир ") == "мир")

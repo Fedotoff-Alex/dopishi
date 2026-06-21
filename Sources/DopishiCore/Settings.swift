@@ -44,6 +44,10 @@ public struct Settings: Codable, Equatable, Sendable {
     /// «Не учиться в этом приложении» (Privacy Center): память НЕ записывается из этих
     /// приложений, но подсказки в них работают (в отличие от excludedBundleIds - полного выкл).
     public var memoryExcludedBundleIds: [String]
+    /// Пользователь ЯВНО выбрал модель в Settings/онбординге (MODEL-03 D-04, SC3).
+    /// true -> автоматика-рекомендация НИКОГДА не перетирает selectedModelFile (только бейдж).
+    /// Дефолт false -> рекомендация активна (преселект в онбординге) до первого ручного выбора.
+    public var manuallySelected: Bool
 
     public init(enabled: Bool = true, debounceMs: Int = 150, minChars: Int = 8,
                 selectedModelFile: String = ModelCatalog.defaultFileName,
@@ -63,7 +67,8 @@ public struct Settings: Codable, Equatable, Sendable {
                 suggestionTelemetryEnabled: Bool = true,
                 onboardingCompleted: Bool = false,
                 memoryTTLDays: Int = 7,
-                memoryExcludedBundleIds: [String] = []) {
+                memoryExcludedBundleIds: [String] = [],
+                manuallySelected: Bool = false) {
         self.enabled = enabled
         self.debounceMs = debounceMs
         self.minChars = minChars
@@ -85,6 +90,7 @@ public struct Settings: Codable, Equatable, Sendable {
         self.onboardingCompleted = onboardingCompleted
         self.memoryTTLDays = memoryTTLDays
         self.memoryExcludedBundleIds = memoryExcludedBundleIds
+        self.manuallySelected = manuallySelected
     }
 
     public static let `default` = Settings()
@@ -121,7 +127,8 @@ public struct Settings: Codable, Equatable, Sendable {
             suggestionTelemetryEnabled: suggestionTelemetryEnabled,
             onboardingCompleted: onboardingCompleted,
             memoryTTLDays: min(max(memoryTTLDays, 1), 90),
-            memoryExcludedBundleIds: memoryExcludedBundleIds
+            memoryExcludedBundleIds: memoryExcludedBundleIds,
+            manuallySelected: manuallySelected
         )
     }
 
@@ -141,6 +148,7 @@ public struct Settings: Codable, Equatable, Sendable {
         case onboardingCompleted
         case memoryTTLDays
         case memoryExcludedBundleIds
+        case manuallySelected
     }
 
     public init(from decoder: Decoder) throws {
@@ -167,5 +175,7 @@ public struct Settings: Codable, Equatable, Sendable {
         self.onboardingCompleted = try c.decodeIfPresent(Bool.self, forKey: .onboardingCompleted) ?? false
         self.memoryTTLDays = try c.decodeIfPresent(Int.self, forKey: .memoryTTLDays) ?? 7
         self.memoryExcludedBundleIds = try c.decodeIfPresent([String].self, forKey: .memoryExcludedBundleIds) ?? []
+        // MODEL-03 D-04: старый persisted JSON без ключа -> false (рекомендация активна).
+        self.manuallySelected = try c.decodeIfPresent(Bool.self, forKey: .manuallySelected) ?? false
     }
 }

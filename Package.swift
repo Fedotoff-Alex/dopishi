@@ -6,6 +6,7 @@ import PackageDescription
 // чтобы DopishiApp оставался без interop.
 let package = Package(
     name: "Dopishi",
+    defaultLocalization: "en",
     platforms: [.macOS("14.0")],
     dependencies: [
         // Форк с патчами (BOS для .plain, batch.clear в Context.clear, logprob-аккумулятор) -
@@ -36,14 +37,19 @@ let package = Package(
                 .interoperabilityMode(.Cxx)
             ]
         ),
+        // Build-tool plugin: swift build/test сами .xcstrings НЕ компилируют, плагин
+        // зовёт xcrun xcstringstool compile и кладёт {en,ru}.lproj в бандл (Pitfall 1).
+        .plugin(name: "XStringsCompile", capability: .buildTool()),
         .executableTarget(
             name: "DopishiApp",
             dependencies: ["DopishiCore", "DopishiLLM", "DopishiMemory"],
+            resources: [.process("Resources/Localizable.xcstrings")],
             swiftSettings: [
                 // C++ interop заразен через import DopishiLLM (тянет C++ модуль llama.cpp),
                 // поэтому потребитель тоже обязан быть в interop-режиме.
                 .interoperabilityMode(.Cxx)
-            ]
+            ],
+            plugins: ["XStringsCompile"]
         ),
         .executableTarget(
             name: "DopishiBench",
@@ -61,6 +67,14 @@ let package = Package(
         .testTarget(
             name: "DopishiLLMTests",
             dependencies: ["DopishiLLM"],
+            swiftSettings: [
+                .interoperabilityMode(.Cxx)
+            ]
+        ),
+        // interop нужен: DopishiApp тянет C++ через DopishiLLM (см. комментарий выше).
+        .testTarget(
+            name: "DopishiAppTests",
+            dependencies: ["DopishiApp"],
             swiftSettings: [
                 .interoperabilityMode(.Cxx)
             ]

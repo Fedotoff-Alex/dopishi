@@ -7,44 +7,44 @@ struct SettingsView: View {
     var body: some View {
         Form {
             Section {
-                Toggle("Запускать при входе в систему", isOn: Binding(
+                Toggle(L.tr("settings.launchAtLogin"), isOn: Binding(
                     get: { vm.launchAtLogin },
                     set: { vm.launchAtLogin = $0 }
                 ))
-                Toggle("Поддержка Electron-приложений", isOn: $vm.config.electronSupport)
+                Toggle(L.tr("settings.electronSupport"), isOn: $vm.config.electronSupport)
             } header: {
-                Text("Система")
+                Text(L.tr("settings.system.header"))
             } footer: {
-                Text("Поддержка Electron включает чтение текста в Claude, VS Code и подобных (исправления и раскладка). Может влиять на оконные менеджеры (Magnet, Rectangle) - включайте при необходимости.")
+                Text(L.tr("settings.system.footer"))
                     .font(.caption).foregroundStyle(.secondary)
             }
 
             Section {
-                Toggle("Контекст экрана (OCR)", isOn: $vm.config.screenContextEnabled)
+                Toggle(L.tr("settings.context.ocr"), isOn: $vm.config.screenContextEnabled)
                 if vm.config.screenContextEnabled {
-                    Button("Открыть настройки записи экрана…") {
+                    Button(L.tr("settings.context.openScreenRecording")) {
                         ScreenCapturePermission.openSettings()
                     }
                 }
-                Toggle("Контекст буфера обмена", isOn: $vm.config.clipboardContextEnabled)
-                Toggle("Память (помнить написанное в окне)", isOn: $vm.config.memoryEnabled)
+                Toggle(L.tr("settings.context.clipboard"), isOn: $vm.config.clipboardContextEnabled)
+                Toggle(L.tr("settings.context.memory"), isOn: $vm.config.memoryEnabled)
                 if vm.config.memoryEnabled {
-                    Button("Очистить память…") { vm.clearMemory() }
+                    Button(L.tr("settings.context.clearMemory")) { vm.clearMemory() }
                 }
             } header: {
-                Text("Контекст")
+                Text(L.tr("settings.context.header"))
             } footer: {
-                Text("Подсказки учитывают текст вокруг поля (тема письма, собеседник, заголовок), недавно скопированный текст и историю того, что вы писали в этом окне. Всё локально (SQLite на вашем Mac), ничего не уходит в сеть. OCR требует «Запись экрана». Буфер подмешивается только если свежий (<5 мин) и пересекается с тем, что вы печатаете. Память хранится 7 дней (настраивается в «Приватность…»), секреты не записываются. Ничего не работает в secure-полях и исключённых приложениях.")
+                Text(L.tr("settings.context.footer"))
                     .font(.caption).foregroundStyle(.secondary)
             }
 
-            Section("Подсказки") {
-                Toggle("Показывать подсказки", isOn: $vm.config.enabled)
-                Stepper("Задержка: \(vm.config.debounceMs) мс",
+            Section(L.tr("settings.suggestions.header")) {
+                Toggle(L.tr("settings.suggestions.show"), isOn: $vm.config.enabled)
+                Stepper(L.tr("settings.suggestions.debounce", vm.config.debounceMs),
                         value: $vm.config.debounceMs, in: 60...1500, step: 10)
-                Stepper("Минимум символов: \(vm.config.minChars)",
+                Stepper(L.tr("settings.suggestions.minChars", vm.config.minChars),
                         value: $vm.config.minChars, in: 1...20)
-                Stepper("Длина дополнения: до \(vm.config.maxCompletionWords) слов",
+                Stepper(L.tr("settings.suggestions.maxWords", vm.config.maxCompletionWords),
                         value: $vm.config.maxCompletionWords, in: 1...12)
             }
 
@@ -61,15 +61,15 @@ struct SettingsView: View {
                         Spacer()
                         if row.downloading {
                             ProgressView(value: vm.downloadProgress).frame(width: 90)
-                            Button("Отмена") { vm.cancelDownload() }
-                                .help("Прервать загрузку - продолжится с того же места")
+                            Button(L.tr("settings.model.cancel")) { vm.cancelDownload() }
+                                .help(L.tr("settings.model.cancelHelp"))
                         } else if row.selected {
-                            Text("используется").font(.caption).foregroundStyle(.secondary)
-                            Button("Скорость") { vm.benchCurrentModel() }
+                            Text(L.tr("settings.model.inUse")).font(.caption).foregroundStyle(.secondary)
+                            Button(L.tr("settings.model.speed")) { vm.benchCurrentModel() }
                                 .disabled(vm.benchRunning || !row.downloaded)
-                                .help("Бенчмарк: скорость генерации этой модели на вашем Mac")
+                                .help(L.tr("settings.model.speedHelp"))
                         } else {
-                            Button(row.downloaded ? "Выбрать" : "Скачать") { vm.choose(modelId: row.id) }
+                            Button(row.downloaded ? L.tr("settings.model.select") : L.tr("settings.model.download")) { vm.choose(modelId: row.id) }
                                 .disabled(vm.downloadingId != nil)
                             if row.deletable {
                                 Button {
@@ -78,7 +78,7 @@ struct SettingsView: View {
                                     Image(systemName: "trash").foregroundStyle(.secondary)
                                 }
                                 .buttonStyle(.plain)
-                                .help("Удалить модель с диска")
+                                .help(L.tr("settings.model.deleteHelp"))
                             }
                         }
                     }
@@ -91,29 +91,29 @@ struct SettingsView: View {
                     Text(vm.modelsTotalText).font(.caption).foregroundStyle(.secondary)
                 }
             } header: {
-                Text("Модель")
+                Text(L.tr("settings.model.header"))
             } footer: {
-                Text("\(vm.ramRecommendationText) Загрузка проверяется по контрольной сумме (sha256); прерванная - продолжается с места отмены.")
+                Text(L.tr("settings.model.footer", vm.ramRecommendationText))
                     .font(.caption).foregroundStyle(.secondary)
             }
 
             Section {
-                Toggle("Переключать раскладку по тапу Option", isOn: $vm.config.manualLayoutSwitchEnabled)
-                Toggle("Автопереключение раскладки", isOn: $vm.config.layoutSwitchEnabled)
-                Toggle("Предлагать исправление опечаток (зелёным, Tab)", isOn: $vm.config.autocorrectEnabled)
-                Toggle("Гасить системное автоисправление macOS", isOn: $vm.config.disableSystemAutocorrect)
+                Toggle(L.tr("settings.corrections.manualLayout"), isOn: $vm.config.manualLayoutSwitchEnabled)
+                Toggle(L.tr("settings.corrections.autoLayout"), isOn: $vm.config.layoutSwitchEnabled)
+                Toggle(L.tr("settings.corrections.autocorrect"), isOn: $vm.config.autocorrectEnabled)
+                Toggle(L.tr("settings.corrections.disableSystem"), isOn: $vm.config.disableSystemAutocorrect)
             } header: {
-                Text("Исправления")
+                Text(L.tr("settings.corrections.header"))
             } footer: {
-                Text("Опечатка не заменяется сама - предлагается исправление зелёным призраком, Tab заменяет слово. Системное автоисправление macOS можно погасить, чтобы оно не конфликтовало (применяется после перезапуска приложения).")
+                Text(L.tr("settings.corrections.footer"))
                     .font(.caption).foregroundStyle(.secondary)
             }
 
             Section {
                 HStack {
-                    TextField("Добавить слово…", text: $newDictWord)
+                    TextField(L.tr("settings.dictionary.addPlaceholder"), text: $newDictWord)
                         .onSubmit { addWord() }
-                    Button("Добавить") { addWord() }
+                    Button(L.tr("settings.dictionary.add")) { addWord() }
                         .disabled(newDictWord.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
                 ForEach(vm.config.customDictionary, id: \.self) { word in
@@ -129,32 +129,32 @@ struct SettingsView: View {
                     }
                 }
             } header: {
-                Text("Личный словарь")
+                Text(L.tr("settings.dictionary.header"))
             } footer: {
-                Text("Слова отсюда не считаются опечаткой и не предлагаются к исправлению - имена, проекты, термины, сленг (как игнор-словарь PuntoSwitcher).")
+                Text(L.tr("settings.dictionary.footer"))
                     .font(.caption).foregroundStyle(.secondary)
             }
 
             Section {
-                TextField("Напр.: пиши кратко и по-деловому, без воды",
+                TextField(L.tr("settings.style.placeholder"),
                           text: $vm.config.writingInstructions, axis: .vertical)
                     .lineLimit(2...5)
             } header: {
-                Text("Указания по стилю")
+                Text(L.tr("settings.style.header"))
             } footer: {
-                Text("Подмешиваются в начало промпта, влияют на стиль/тон продолжений. Пусто - без указаний.")
+                Text(L.tr("settings.style.footer"))
                     .font(.caption).foregroundStyle(.secondary)
             }
 
             Section {
-                TextField("sig: С уважением, Алекс\naddr: Павловская 27с1",
+                TextField(L.tr("settings.snippets.placeholder"),
                           text: $vm.config.snippetsRaw, axis: .vertical)
                     .lineLimit(3...8)
                     .font(.system(.body, design: .monospaced))
             } header: {
-                Text("Сниппеты")
+                Text(L.tr("settings.snippets.header"))
             } footer: {
-                Text("Одна строка = «имя: текст». Набери :имя и нажми Tab - текст вставится. Встроенные: :date (дата) и :time (время).")
+                Text(L.tr("settings.snippets.footer"))
                     .font(.caption).foregroundStyle(.secondary)
             }
 
@@ -171,15 +171,15 @@ struct SettingsView: View {
                         .buttonStyle(.plain)
                     }
                 }
-                Menu("Добавить приложение…") {
+                Menu(L.tr("settings.exclusions.addApp")) {
                     ForEach(vm.pickableApps) { app in
                         Button(app.name) { vm.addExclusion(bundleId: app.id) }
                     }
                 }
             } header: {
-                Text("Не работать в приложениях")
+                Text(L.tr("settings.exclusions.header"))
             } footer: {
-                Text("Dopishi работает во всех приложениях. Здесь - где полностью выключить (подсказки, авто- и ручное переключение).")
+                Text(L.tr("settings.exclusions.footer"))
                     .font(.caption).foregroundStyle(.secondary)
             }
         }

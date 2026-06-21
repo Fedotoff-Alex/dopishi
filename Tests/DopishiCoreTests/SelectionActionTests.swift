@@ -2,9 +2,11 @@ import Testing
 @testable import DopishiCore
 
 @Suite struct SelectionActionTests {
-    @Test func allActionsHaveMenuTitles() {
+    @Test func allActionsHaveStableMenuTitleIds() {
+        // D-11/Open Q3: menuTitle отдаёт стабильный id (App локализует через L.tr), не русский текст.
         for a in SelectionAction.allCases {
             #expect(!a.menuTitle.isEmpty)
+            #expect(a.menuTitle.hasPrefix("selection.action."))
         }
     }
     @Test func promptEmbedsText() {

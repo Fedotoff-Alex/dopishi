@@ -18,9 +18,11 @@ public enum ContextBuilder {
         while let last = tail.last, last == " " || last == "\n" || last == "\t" { tail.removeLast() }
 
         // Каналы: схлопнутые в одну строку, обрезанные под бюджет.
-        let mem = bundle.memory.map { collapse($0, max: memMax) } ?? ""
-        let win = bundle.ocr.map { collapse($0.windowText, max: ocrMax) } ?? ""
-        let clip = bundle.clipboard.map { collapse($0, max: clipMax) } ?? ""
+        // ВОРОНКА 2 (D-03/D-04): доп-канал с секретом дропается ЦЕЛИКОМ. fieldTail (хвост поля,
+        // что пользователь печатает сам) под guard НЕ ставим - Open Q1 (иначе теряем подсказки).
+        let mem = bundle.memory.flatMap { SecretGuard.looksSecret($0) ? nil : collapse($0, max: memMax) } ?? ""
+        let win = bundle.ocr.flatMap { SecretGuard.looksSecret($0.windowText) ? nil : collapse($0.windowText, max: ocrMax) } ?? ""
+        let clip = bundle.clipboard.flatMap { SecretGuard.looksSecret($0) ? nil : collapse($0, max: clipMax) } ?? ""
 
         // Нет ни одного доп. канала - ровно как fewShotCompletionPrompt (полная KV-голова, 0 регрессии).
         guard !mem.isEmpty || !win.isEmpty || !clip.isEmpty else {
